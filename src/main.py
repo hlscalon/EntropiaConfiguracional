@@ -13,32 +13,34 @@ from random import uniform
 from numpy import asarray
 from numpy.polynomial.polynomial import polyfit
 
-def run(G, m, n, slab, c, atomic_number):
-	graphs = bg.Graphs(m)
-
-	generateSubgraphs(G, graphs, m, n, slab, atomic_number)
-	Hc_n, valid = graphs.check_isomorfism(n, m, c)
-
+def run(G, m, n, slab, c):
+	(pbcX, pbcY, pbcZ) = slab.get_pbc()
+	(dmin, dmax) = getMaxMinSlabArray(slab)
+	graphs = bg.Graphs(m, n, G, 3, len(slab), pbcX, pbcY, pbcZ, dmin, dmax)
+	graphs.add_positions(slab.get_positions(wrap=True))
+	cell = slab.get_cell()
+	graphs.init_search(0, cell[0][0], 0, cell[1][1], 0, cell[2][2])
+	Hc_n, valid = graphs.calculate_configurational_entropy(c)
 	if not valid:
 		print("n: %d. H1(n) exceeds 1%% of H(n). Not a valid measurement." % n)
 
 	return Hc_n, valid
 
-def generateSubgraphs(G, graphs, m, n, slab, atomic_number):
+def generateSubgraphs(G, graphs, m, n, slab, atomic_number, aboria_tree):
 	(dmin, dmax) = getMaxMinSlab(slab)
 
 	closest_neighbors = []
 	for i in range(m):
 		(x, y, z) = generateRandomPoint(dmin, dmax)
-		n_closest_neighbors = getNClosestNeighborsFromPoint(slab, n, x, y, z, atomic_number)
+		n_closest_neighbors = aboria_tree.search_nearest_neighbors(x, y, z, n)
 		closest_neighbors.append(n_closest_neighbors)
 
 	graphs.generate_subgraphs(G, n, closest_neighbors)
 
-def getMaxMinSlab(slab):
+def getMaxMinSlabArray(slab):
 	(dmin, dmax) = (
-		{ 0:  float("Inf"), 1:  float("Inf"), 2:  float("Inf") },  # x, y, z
-		{ 0: -float("Inf"), 1: -float("Inf"), 2: -float("Inf") }   # x, y, z
+		[float("Inf"), float("Inf"), float("Inf")],  # x, y, z
+		[-float("Inf"), -float("Inf"), -float("Inf")]   # x, y, z
 	)
 
 	positions = slab.get_positions(wrap=True) # wrap atoms back to simulation cell
@@ -49,32 +51,7 @@ def getMaxMinSlab(slab):
 			if (d < dmin[idx]):
 				dmin[idx] = d
 
-	return (dmin, dmax)
-
-def generateRandomPoint(dmin, dmax):
-	x = uniform(dmin[0], dmax[0])
-	y = uniform(dmin[1], dmax[1])
-	z = uniform(dmin[2], dmax[2])
-
-	return (x, y, z)
-
-def getAllDistancesFromPoint(slab, atomic_number, x, y, z):
-	slab.append(Atom(atomic_number, (x, y, z))) # get the first atom
-	idxAtom = len(slab) - 1
-	indices = range(0, idxAtom)
-	all_distances = slab.get_distances(idxAtom, indices, mic=True)
-	slab.pop()
-
-	return all_distances
-
-def getNClosestNeighborsFromPoint(slab, n, x, y, z, atomic_number):
-	all_distances = getAllDistancesFromPoint(slab, atomic_number, x, y, z)
-	distances = {}
-	for idx, distance in enumerate(all_distances):
-		distances[idx] = distance
-
-	n_first = sorted(distances.items(), key=itemgetter(1))[:n] # return list of tuples
-	return [i[0] for i in n_first] # return only the first element in list
+	return (asarray(dmin), asarray(dmax))
 
 def generateGraphFromSlab(slab, covalent_radii_cut_off):
 	graph = bg.Graph()
@@ -94,10 +71,6 @@ def generateGraphFromSlab(slab, covalent_radii_cut_off):
 					graph.add_edge(atom1, atom2)
 
 	return graph
-
-def printGraph(graph):
-	bg.draw(graph, with_labels=True)
-	plt.show()
 
 def main():
 	if len(sys.argv) < 7:
@@ -140,10 +113,10 @@ def main():
 
 	hcn_values = []
 	xy_polyfit = []
-	atomic_number = slab.get_atomic_numbers()[0]
+
 	for n in range(n1, n2):
 		m = n * n * total_nodes
-		(hcn, valid) = run(G, m, n, slab, c, atomic_number)
+		(hcn, valid) = run(G, m, n, slab, c)
 
 		f.write("n: " + str(n) + "; m: " + str(m) + "; hcn: " + str(hcn) + "; valid: " + str(valid) + "\r\n")
 
