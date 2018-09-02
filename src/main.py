@@ -1,7 +1,9 @@
 import sys
 import boost_graph as bg
 import matplotlib.pyplot as plt
+import os
 
+from datetime import datetime
 from ase import Atom
 from ase.io import read
 from ase.data import covalent_radii
@@ -11,80 +13,27 @@ from random import uniform
 from numpy import asarray
 from numpy.polynomial.polynomial import polyfit
 
-def run(G, m, n, slab, c):
-	graphs = generateSubgraphs(G, m, n, slab)
+def run(G, m, n, slab, c, atomic_number):
+	graphs = bg.Graphs(m)
 
-	label_total = {}
-	iso_label = 1
-	for i in range(len(graphs)):
-		for j in range(i + 1, len(graphs)):
-			iso_label_i = graphs[i].isoLabel
-			iso_label_j = graphs[j].isoLabel
+	generateSubgraphs(G, graphs, m, n, slab, atomic_number)
+	Hc_n, valid = graphs.check_isomorfism(n, m, c)
 
-			if iso_label_i == 0 or iso_label_j == 0:
-				if bg.is_isomorphic(graphs[i], graphs[j]):
-					if iso_label_i == 0 and iso_label_j == 0:
-						graphs[i].isoLabel = iso_label
-						graphs[j].isoLabel = iso_label
-						label_total[iso_label] = 2
-						iso_label += 1 # label already used
-					elif iso_label_i > 0 and iso_label_j == 0:
-						graphs[j].isoLabel = iso_label_i
-						label_total[iso_label_i] += 1
-					elif iso_label_j > 0 and iso_label_i == 0:
-						graphs[i].isoLabel = iso_label_j
-						label_total[iso_label_j] += 1
-					elif iso_label_i != iso_label_j:
-						print("Error while checking isomorphism:\nlabelGi %d : labelGj %d" % (iso_label_i, iso_label_j))
-
-	# get all graphs that are not isomorphic with any other
-	for g in graphs:
-		if g.isoLabel == 0:
-			label_total[iso_label] = 1
-			iso_label += 1
-
-	H_n = 0.0
-	H1n = 0.0
-	for i in range(1, iso_label):
-		fi = float(label_total[i])
-		H_n = calcShannonEntropy(H_n, fi, m)
-		if fi == 1.0:
-			H1n = calcShannonEntropy(H1n, fi, m)
-
-	H1nDiv = 0.0
-	if H_n > 0:
-		H1nDiv = (H1n / H_n)
-
-	H_n_extrapolated = H_n + (c * H1nDiv)
-	g_n = 2 * log(n) # (spatial_dimensions - 1)
-	Hc_n = H_n_extrapolated - g_n
-
-	valid = True
-	if H1n > (H_n / 100):
-		print("n: %d. H1(n) exceeds 1% of H(n). Not a valid measurement." % (n))
-		valid = False
+	if not valid:
+		print("n: %d. H1(n) exceeds 1%% of H(n). Not a valid measurement." % n)
 
 	return Hc_n, valid
 
-def calcShannonEntropy(Hn, fi, m):
-	pi = fi / m
-	Hn -= pi * log(pi)
-	return Hn
-
-def generateSubgraphs(G, m, n, slab):
-	graphs = []
-
+def generateSubgraphs(G, graphs, m, n, slab, atomic_number):
 	(dmin, dmax) = getMaxMinSlab(slab)
 
-	i = 0
-	while i < m:
+	closest_neighbors = []
+	for i in range(m):
 		(x, y, z) = generateRandomPoint(dmin, dmax)
-		n_closest_neighbors = getNClosestNeighborsFromPoint(slab, n, x, y, z)
-		graph = generateSubGraph(G, n, n_closest_neighbors)
-		graphs.append(graph)
-		i += 1
+		n_closest_neighbors = getNClosestNeighborsFromPoint(slab, n, x, y, z, atomic_number)
+		closest_neighbors.append(n_closest_neighbors)
 
-	return graphs
+	graphs.generate_subgraphs(G, n, closest_neighbors)
 
 def getMaxMinSlab(slab):
 	(dmin, dmax) = (
@@ -109,37 +58,23 @@ def generateRandomPoint(dmin, dmax):
 
 	return (x, y, z)
 
-def getNClosestNeighborsFromPoint(slab, n, x, y, z):
-	atomic_numbers = slab.get_atomic_numbers()
-
-	slab.append(Atom(atomic_numbers[0], (x, y, z))) # get the first atom
+def getAllDistancesFromPoint(slab, atomic_number, x, y, z):
+	slab.append(Atom(atomic_number, (x, y, z))) # get the first atom
 	idxAtom = len(slab) - 1
-	all_distances = slab.get_all_distances(mic=True)[idxAtom]
+	indices = range(0, idxAtom)
+	all_distances = slab.get_distances(idxAtom, indices, mic=True)
 	slab.pop()
 
+	return all_distances
+
+def getNClosestNeighborsFromPoint(slab, n, x, y, z, atomic_number):
+	all_distances = getAllDistancesFromPoint(slab, atomic_number, x, y, z)
 	distances = {}
 	for idx, distance in enumerate(all_distances):
-		if idx == idxAtom:
-			break
 		distances[idx] = distance
 
 	n_first = sorted(distances.items(), key=itemgetter(1))[:n] # return list of tuples
 	return [i[0] for i in n_first] # return only the first element in list
-
-def generateSubGraph(G, n, n_closest_neighbors):
-	graph = bg.Graph()
-
-	for node in n_closest_neighbors:
-		if G.has_node(node):
-			if not graph.has_node(node):
-				graph.add_node(node)
-
-			neighbors = G.get_neighbors(node)
-			for neighbor in neighbors:
-				if neighbor in n_closest_neighbors:
-					graph.add_edge(node, neighbor)
-
-	return graph
 
 def generateGraphFromSlab(slab, covalent_radii_cut_off):
 	graph = bg.Graph()
@@ -165,8 +100,8 @@ def printGraph(graph):
 	plt.show()
 
 def main():
-	if len(sys.argv) < 6:
-		print("1 parameter: xyz filename\n2 parameter: covalent_radii_cut_off\n3 parameter: c\n4 parameter: initial n\n5 parameter: final n")
+	if len(sys.argv) < 7:
+		print("1 parameter: xyz filename\n2 parameter: covalent_radii_cut_off\n3 parameter: c\n4 parameter: initial n\n5 parameter: final n\n6 parameter: calculate (Y or N)")
 		return
 
 	filename = sys.argv[1]
@@ -174,6 +109,7 @@ def main():
 	c = float(sys.argv[3])
 	n1 = int(sys.argv[4])
 	n2 = int(sys.argv[5])
+	calculate = sys.argv[6] # Y or N
 
 	if n1 > n2:
 		print("Final m cannot be smaller than initial m")
@@ -193,30 +129,48 @@ def main():
 
 	print("Graph created with success. Nodes found: %d" % total_nodes)
 
+	date_now = datetime.now()
+	ce_file = "generated_files/gen_" + str(date_now.day) + "_" + str(date_now.month) + "_" + str(date_now.year) + "_" + str(date_now.hour) + "_" + str(date_now.minute) + "_" + str(date_now.second) + ".ce"
+	dirname = os.path.dirname(ce_file)
+	if not os.path.exists(dirname):
+		os.makedirs(dirname)
+
+	f = open(ce_file, "w+")
+	f.write("filename: " + filename + "; covalent: " + str(covalent_radii_cut_off) + "; c: " + str(c) + "; n1: " + str(n1) + "; n2: " + str(n2) + "\r\n")
+
 	hcn_values = []
 	xy_polyfit = []
+	atomic_number = slab.get_atomic_numbers()[0]
 	for n in range(n1, n2):
 		m = n * n * total_nodes
-		(hcn, valid) = run(G, m, n, slab, c)
+		(hcn, valid) = run(G, m, n, slab, c, atomic_number)
+
+		f.write("n: " + str(n) + "; m: " + str(m) + "; hcn: " + str(hcn) + "; valid: " + str(valid) + "\r\n")
+
 		hcn_values.append((n, hcn))
 		if valid:
 			xy_polyfit.append((n, hcn))
 
-	(x_p, y_p) = zip(*xy_polyfit)
-	x_p = asarray(x_p)
-	y_p = asarray(y_p)
+	f.close()
 
-	# straight line fit
-	b, m = polyfit(x_p, y_p, 1) # m equals the slope of the line
-	plt.plot(x_p, b + m * x_p, '-')
+	if calculate == "Y":
+		(x_p, y_p) = zip(*xy_polyfit)
+		x_p = asarray(x_p)
+		y_p = asarray(y_p)
 
-	x, y = zip(*hcn_values)
-	plt.scatter(x, y)
+		# straight line fit
+		b, m = polyfit(x_p, y_p, 1) # m equals the slope of the line
+		plt.plot(x_p, b + m * x_p, '-')
 
-	plt.axis([n1, n2, -5, 10])
-	plt.show()
+		x, y = zip(*hcn_values)
+		plt.scatter(x, y)
 
-	print("Estimated configurational entropy = %f" % (m))
+		plt.axis([n1, n2, -5, 10])
+		plt.show()
+
+		print("Estimated configurational entropy = %f" % (m))
+
+	print("Program ended correctly")
 
 if __name__ == "__main__":
 	main()
