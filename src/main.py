@@ -1,5 +1,5 @@
 import sys
-import networkx as nx
+import boost_graph as bg
 import matplotlib.pyplot as plt
 
 from ase import Atom
@@ -18,28 +18,28 @@ def run(G, m, n, slab, c):
 	iso_label = 1
 	for i in range(len(graphs)):
 		for j in range(i + 1, len(graphs)):
-			iso_label_i = graphs[i].graph["isoLabel"]
-			iso_label_j = graphs[j].graph["isoLabel"]
+			iso_label_i = graphs[i].isoLabel
+			iso_label_j = graphs[j].isoLabel
 
 			if iso_label_i == 0 or iso_label_j == 0:
-				if nx.is_isomorphic(graphs[i], graphs[j]):
+				if bg.is_isomorphic(graphs[i], graphs[j]):
 					if iso_label_i == 0 and iso_label_j == 0:
-						graphs[i].graph["isoLabel"] = iso_label
-						graphs[j].graph["isoLabel"] = iso_label
+						graphs[i].isoLabel = iso_label
+						graphs[j].isoLabel = iso_label
 						label_total[iso_label] = 2
 						iso_label += 1 # label already used
 					elif iso_label_i > 0 and iso_label_j == 0:
-						graphs[j].graph["isoLabel"] = iso_label_i
+						graphs[j].isoLabel = iso_label_i
 						label_total[iso_label_i] += 1
 					elif iso_label_j > 0 and iso_label_i == 0:
-						graphs[i].graph["isoLabel"] = iso_label_j
+						graphs[i].isoLabel = iso_label_j
 						label_total[iso_label_j] += 1
 					elif iso_label_i != iso_label_j:
 						print("Error while checking isomorphism:\nlabelGi %d : labelGj %d" % (iso_label_i, iso_label_j))
 
 	# get all graphs that are not isomorphic with any other
 	for g in graphs:
-		if g.graph["isoLabel"] == 0:
+		if g.isoLabel == 0:
 			label_total[iso_label] = 1
 			iso_label += 1
 
@@ -127,26 +127,27 @@ def getNClosestNeighborsFromPoint(slab, n, x, y, z):
 	return [i[0] for i in n_first] # return only the first element in list
 
 def generateSubGraph(G, n, n_closest_neighbors):
-	graph = nx.Graph(isoLabel=0)
+	graph = bg.Graph()
 
 	for node in n_closest_neighbors:
-		if node in G:
-			if node not in graph:
+		if G.has_node(node):
+			if not graph.has_node(node):
 				graph.add_node(node)
 
-			for neighbor in G[node]:
+			neighbors = G.get_neighbors(node)
+			for neighbor in neighbors:
 				if neighbor in n_closest_neighbors:
 					graph.add_edge(node, neighbor)
 
 	return graph
 
 def generateGraphFromSlab(slab, covalent_radii_cut_off):
-	graph = nx.Graph()
+	graph = bg.Graph()
 
 	atomic_numbers = slab.get_atomic_numbers()
 	all_distances = slab.get_all_distances(mic=True)
 	for atom1, distances in enumerate(all_distances):
-		if atom1 not in graph:
+		if not graph.has_node(atom1):
 			graph.add_node(atom1) # add nodes not bonded
 
 		atom1_cr = covalent_radii[atomic_numbers[atom1]]
@@ -160,7 +161,7 @@ def generateGraphFromSlab(slab, covalent_radii_cut_off):
 	return graph
 
 def printGraph(graph):
-	nx.draw(graph, with_labels=True)
+	bg.draw(graph, with_labels=True)
 	plt.show()
 
 def main():
@@ -185,8 +186,8 @@ def main():
 	print("Slab %s read with success" % filename)
 
 	G = generateGraphFromSlab(slab, covalent_radii_cut_off)
-	total_nodes = len(G)
-	if total_nodes == 0 or G.number_of_edges() == 0:
+	total_nodes = G.get_total_nodes()
+	if total_nodes == 0 or G.get_total_edges() == 0:
 		print("No edges found in graph. Check covalent_radii_cut_off")
 		return
 
