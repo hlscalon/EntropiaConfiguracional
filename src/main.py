@@ -13,6 +13,11 @@ from random import uniform
 from numpy import asarray
 from numpy.polynomial.polynomial import polyfit
 
+"""
+python2 main.py ../arquivos_xyz/fcc.xyz 1.12 0 3 10 Y
+python2 -m cProfile -s time main.py ../arquivos_xyz/fcc.xyz 1.12 0 3 10 Y
+"""
+
 def run(G, m, n, slab, c):
 	(pbcX, pbcY, pbcZ) = slab.get_pbc()
 	(dmin, dmax) = getMaxMinSlabArray(slab)
