@@ -1,8 +1,0 @@
-filepath: arquivos_xyz/fcc.xyz; covalent: 1.12; c: 0.0; n1: 3; n2: 10
-n: 3; m: 432; hcn: -2.19722457734; valid: True
-n: 4; m: 768; hcn: -2.07956361696; valid: True
-n: 5; m: 1200; hcn: -2.15008838196; valid: True
-n: 6; m: 1728; hcn: -1.82417780276; valid: True
-n: 7; m: 2352; hcn: -2.07265485524; valid: True
-n: 8; m: 3072; hcn: -2.36255118934; valid: True
-n: 9; m: 3888; hcn: -2.22785239472; valid: True
