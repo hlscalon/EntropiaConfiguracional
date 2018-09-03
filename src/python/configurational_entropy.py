@@ -1,9 +1,8 @@
 import sys
 import boost_graph as bg
 import matplotlib.pyplot as plt
-import os
 
-from datetime import datetime
+from measurement import Measurement
 from ase import Atom
 from ase.io import read
 from ase.data import covalent_radii
@@ -12,11 +11,6 @@ from operator import itemgetter
 from random import uniform
 from numpy import asarray
 from numpy.polynomial.polynomial import polyfit
-
-"""
-python2 main.py ../arquivos_xyz/fcc.xyz 1.12 0 3 10 Y
-python2 -m cProfile -s time main.py ../arquivos_xyz/fcc.xyz 1.12 0 3 10 Y
-"""
 
 def run(G, m, n, slab, c):
 	(pbcX, pbcY, pbcZ) = slab.get_pbc()
@@ -30,17 +24,6 @@ def run(G, m, n, slab, c):
 		print("n: %d. H1(n) exceeds 1%% of H(n). Not a valid measurement." % n)
 
 	return Hc_n, valid
-
-def generateSubgraphs(G, graphs, m, n, slab, atomic_number, aboria_tree):
-	(dmin, dmax) = getMaxMinSlab(slab)
-
-	closest_neighbors = []
-	for i in range(m):
-		(x, y, z) = generateRandomPoint(dmin, dmax)
-		n_closest_neighbors = aboria_tree.search_nearest_neighbors(x, y, z, n)
-		closest_neighbors.append(n_closest_neighbors)
-
-	graphs.generate_subgraphs(G, n, closest_neighbors)
 
 def getMaxMinSlabArray(slab):
 	(dmin, dmax) = (
@@ -77,27 +60,34 @@ def generateGraphFromSlab(slab, covalent_radii_cut_off):
 
 	return graph
 
-def main():
-	if len(sys.argv) < 7:
-		print("1 parameter: xyz filename\n2 parameter: covalent_radii_cut_off\n3 parameter: c\n4 parameter: initial n\n5 parameter: final n\n6 parameter: calculate (Y or N)")
-		return
+def calculateConfigurationalEntropy(n1, n2, xy_polyfit, hcn_values):
+	(x_p, y_p) = zip(*xy_polyfit)
+	x_p = asarray(x_p)
+	y_p = asarray(y_p)
 
-	filename = sys.argv[1]
-	covalent_radii_cut_off = float(sys.argv[2]) # 1.12
-	c = float(sys.argv[3])
-	n1 = int(sys.argv[4])
-	n2 = int(sys.argv[5])
-	calculate = sys.argv[6] # Y or N
+	# straight line fit
+	b, m = polyfit(x_p, y_p, 1) # m equals the slope of the line
+	plt.plot(x_p, b + m * x_p, '-')
 
+	x, y = zip(*hcn_values)
+	plt.scatter(x, y)
+
+	plt.axis([n1, n2, -5, 10])
+	plt.show()
+
+	print("Estimated configurational entropy = %f" % (m))
+
+
+def startMeasurement(filepath, covalent_radii_cut_off, c, n1, n2, calculate):
 	if n1 > n2:
 		print("Final m cannot be smaller than initial m")
 		return
 
 	print("Starting script...")
 
-	slab = read(filename)
+	slab = read(filepath)
 
-	print("Slab %s read with success" % filename)
+	print("Slab %s read with success" % filepath)
 
 	G = generateGraphFromSlab(slab, covalent_radii_cut_off)
 	total_nodes = G.get_total_nodes()
@@ -107,14 +97,7 @@ def main():
 
 	print("Graph created with success. Nodes found: %d" % total_nodes)
 
-	date_now = datetime.now()
-	ce_file = "generated_files/gen_" + str(date_now.day) + "_" + str(date_now.month) + "_" + str(date_now.year) + "_" + str(date_now.hour) + "_" + str(date_now.minute) + "_" + str(date_now.second) + ".ce"
-	dirname = os.path.dirname(ce_file)
-	if not os.path.exists(dirname):
-		os.makedirs(dirname)
-
-	f = open(ce_file, "w+")
-	f.write("filename: " + filename + "; covalent: " + str(covalent_radii_cut_off) + "; c: " + str(c) + "; n1: " + str(n1) + "; n2: " + str(n2) + "\r\n")
+	f = Measurement(filepath, covalent_radii_cut_off, c, n1, n2)
 
 	hcn_values = []
 	xy_polyfit = []
@@ -123,7 +106,7 @@ def main():
 		m = n * n * total_nodes
 		(hcn, valid) = run(G, m, n, slab, c)
 
-		f.write("n: " + str(n) + "; m: " + str(m) + "; hcn: " + str(hcn) + "; valid: " + str(valid) + "\r\n")
+		f.writeResult(n, m, hcn, valid)
 
 		hcn_values.append((n, hcn))
 		if valid:
@@ -132,23 +115,6 @@ def main():
 	f.close()
 
 	if calculate == "Y":
-		(x_p, y_p) = zip(*xy_polyfit)
-		x_p = asarray(x_p)
-		y_p = asarray(y_p)
-
-		# straight line fit
-		b, m = polyfit(x_p, y_p, 1) # m equals the slope of the line
-		plt.plot(x_p, b + m * x_p, '-')
-
-		x, y = zip(*hcn_values)
-		plt.scatter(x, y)
-
-		plt.axis([n1, n2, -5, 10])
-		plt.show()
-
-		print("Estimated configurational entropy = %f" % (m))
+		calculateConfigurationalEntropy(n1, n2, xy_polyfit, hcn_values)
 
 	print("Program ended correctly")
-
-if __name__ == "__main__":
-	main()
