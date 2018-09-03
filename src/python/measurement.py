@@ -2,7 +2,10 @@ import os
 from datetime import datetime
 
 class Measurement():
-	def __init__(self, filepath, covalent_radii_cut_off, c, n1, n2):
+	def __init__(self):
+		return None
+
+	def fromFile(self, filepath, covalent_radii_cut_off, c, n1, n2):
 		self.filepath = filepath
 		self.filename = os.path.basename(filepath)
 		self.covalent_radii_cut_off = covalent_radii_cut_off
@@ -10,10 +13,9 @@ class Measurement():
 		self.n1 = n1
 		self.n2 = n2
 		self.f = None
-		self.createFile();
 
-	def __init__(self, filepath):
-		print("entrou aqui " + filepath) #TODO
+	def fromMeasurement(self, filepath):
+		self.filepath = filepath
 
 	def createFile(self):
 		date_now = datetime.now()
@@ -30,3 +32,32 @@ class Measurement():
 
 	def close(self):
 		self.f.close()
+
+	def readFile(self):
+		f = open(self.filepath, "r")
+
+		firstLine = f.readline()
+		n1idx = firstLine.find("n1: ")
+		n2idx = firstLine.find("; n2: ")
+
+		n1 = int(firstLine[n1idx + 4 : n2idx])
+		n2 = int(firstLine[n2idx + 6 : ])
+
+		xy_polyfit = []
+		hcn_values = []
+		for line in f:
+			nidx = line.find("n: ")
+			midx = line.find("; m: ")
+			n = int(line[nidx + 3 : midx])
+			hcnidx = line.find("hcn: ")
+			valididx = line.find("; valid: ")
+			hcn = float(line[hcnidx + 5 : valididx])
+			valid = line[valididx + 9 : ].strip() == 'True'
+
+			hcn_values.append((n, hcn))
+			if valid:
+				xy_polyfit.append((n, hcn))
+
+		f.close()
+
+		return n1, n2, xy_polyfit, hcn_values

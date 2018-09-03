@@ -97,7 +97,9 @@ def startMeasurement(filepath, covalent_radii_cut_off, c, n1, n2, calculate):
 
 	print("Graph created with success. Nodes found: %d" % total_nodes)
 
-	f = Measurement(filepath, covalent_radii_cut_off, c, n1, n2)
+	measurement = Measurement()
+	measurement.fromFile(filepath, covalent_radii_cut_off, c, n1, n2)
+	measurement.createFile()
 
 	hcn_values = []
 	xy_polyfit = []
@@ -106,13 +108,13 @@ def startMeasurement(filepath, covalent_radii_cut_off, c, n1, n2, calculate):
 		m = n * n * total_nodes
 		(hcn, valid) = run(G, m, n, slab, c)
 
-		f.writeResult(n, m, hcn, valid)
+		measurement.writeResult(n, m, hcn, valid)
 
 		hcn_values.append((n, hcn))
 		if valid:
 			xy_polyfit.append((n, hcn))
 
-	f.close()
+	measurement.close()
 
 	if calculate == "Y":
 		calculateConfigurationalEntropy(n1, n2, xy_polyfit, hcn_values)
