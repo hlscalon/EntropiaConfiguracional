@@ -105,7 +105,7 @@ def startMeasurement(filepath, covalent_radii_cut_off, c, n1, n2, calculate):
 	configurationalEntropy.add_positions(slab.get_positions(wrap=True))
 	cell = slab.get_cell()
 
-	if !is_orthorhombic(cell):
+	if not is_orthorhombic(cell):
 		print("Unit cell is not orthorhombic")
 		return
 
