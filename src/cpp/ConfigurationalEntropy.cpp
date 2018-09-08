@@ -9,46 +9,46 @@ const Point ConfigurationalEntropy::generate_random_point() {
 }
 
 py::tuple ConfigurationalEntropy::calculate(int m, int n, double c) {
-	Vector2D<int> closestNeighbors = this->get_closest_neighbors(m, n);
-	Vector<Graph> graphs(m);
-	this->generate_subgraphs(graphs, closestNeighbors);
+	Vector<Graph> graphs = this->get_subgraphs(m, n);
 	return this->check_isomorfism(graphs, c, m, n);
 }
 
-const Vector2D<int> ConfigurationalEntropy::get_closest_neighbors(int m, int n) {
-	Vector2D<int> closestNeighbors(m);
+const Vector<Graph> ConfigurationalEntropy::get_subgraphs(int m, int n) {
+	Vector<Graph> graphs(m);
+
 	for (int i = 0; i < m; ++i) {
 		Point rp = this->generate_random_point();
 		double x = std::get<0>(rp);
 		double y = std::get<1>(rp);
 		double z = std::get<2>(rp);
-		closestNeighbors[i] = this->search_nearest_neighbors(x, y, z, n);
+
+		Vector<int> closestNeighbors = this->search_nearest_neighbors(x, y, z, n);
+
+		graphs[i] = this->generate_subgraph(closestNeighbors);
 	}
-	return closestNeighbors;
+
+	return graphs;
 }
 
-void ConfigurationalEntropy::generate_subgraphs(Vector<Graph> & graphs, const Vector2D<int> & closestNeighbors) {
-	int pos = 0;
-	for (const auto & nClosestNeighbors : closestNeighbors) {
-		Graph graph = Graph();
-		for (const auto & node : nClosestNeighbors) {
-			if (_completeGraph.has_node(node)) {
-				if (!graph.has_node(node)) {
-					graph.add_node(node);
-				}
+Graph ConfigurationalEntropy::generate_subgraph(const Vector<int> & closestNeighbors) {
+	Graph graph;
 
-				const Vector<int> & neighbors = _completeGraph.get_neighbors(node);
-				for (const auto & neighbor : neighbors) {
-					if (std::find(nClosestNeighbors.begin(), nClosestNeighbors.end(), neighbor) != nClosestNeighbors.end()) {
-						graph.add_edge(node, neighbor);
-					}
+	for (const auto & node : closestNeighbors) {
+		if (_completeGraph.has_node(node)) {
+			if (!graph.has_node(node)) {
+				graph.add_node(node);
+			}
+
+			const Vector<int> & neighbors = _completeGraph.get_neighbors(node); // fazer uma cache disso
+			for (const auto & neighbor : neighbors) {
+				if (std::find(closestNeighbors.begin(), closestNeighbors.end(), neighbor) != closestNeighbors.end()) {
+					graph.add_edge(node, neighbor);
 				}
 			}
 		}
-
-		// check size ?
-		graphs[pos++] = graph;
 	}
+
+	return graph;
 }
 
 py::tuple ConfigurationalEntropy::check_isomorfism(Vector<Graph> & graphs, double c, int m, int n) {
