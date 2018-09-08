@@ -4,3 +4,6 @@ medicoes
 medicoes/
 src/python/*.pyc
 src/python/boost_graph.so
+src/__init__.pyc
+*.pyc
+*.so
