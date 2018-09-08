@@ -6,20 +6,15 @@ from measurement import Measurement
 from ase import Atom
 from ase.io import read
 from ase.data import covalent_radii
+from ase.geometry import is_orthorhombic
 from math import log
 from operator import itemgetter
 from random import uniform
 from numpy import asarray
 from numpy.polynomial.polynomial import polyfit
 
-def run(G, m, n, slab, c):
-	(pbcX, pbcY, pbcZ) = slab.get_pbc()
-	(dmin, dmax) = getMaxMinSlabArray(slab)
-	graphs = bg.Graphs(m, n, G, 3, len(slab), pbcX, pbcY, pbcZ, dmin, dmax)
-	graphs.add_positions(slab.get_positions(wrap=True))
-	cell = slab.get_cell()
-	graphs.init_search(0, cell[0][0], 0, cell[1][1], 0, cell[2][2])
-	Hc_n, valid = graphs.calculate_configurational_entropy(c)
+def run(configurationEntropy, m, n, c):
+	Hc_n, valid = configurationEntropy.calculate(m, n, c)
 	if not valid:
 		print("n: %d. H1(n) exceeds 1%% of H(n). Not a valid measurement." % n)
 
@@ -104,9 +99,22 @@ def startMeasurement(filepath, covalent_radii_cut_off, c, n1, n2, calculate):
 	hcn_values = []
 	xy_polyfit = []
 
+	(pbcX, pbcY, pbcZ) = slab.get_pbc()
+	(dmin, dmax) = getMaxMinSlabArray(slab)
+	configurationalEntropy = bg.ConfigurationalEntropy(G, 3, len(slab), pbcX, pbcY, pbcZ, dmin, dmax)
+	configurationalEntropy.add_positions(slab.get_positions(wrap=True))
+	cell = slab.get_cell()
+
+	if !is_orthorhombic(cell):
+		print("Unit cell is not orthorhombic")
+		return
+
+	# somente para celulas ortogonais
+	configurationalEntropy.init_search(0, cell[0][0], 0, cell[1][1], 0, cell[2][2])
+
 	for n in range(n1, n2):
 		m = n * n * total_nodes
-		(hcn, valid) = run(G, m, n, slab, c)
+		(hcn, valid) = run(configurationalEntropy, m, n, c)
 
 		measurement.writeResult(n, m, hcn, valid)
 

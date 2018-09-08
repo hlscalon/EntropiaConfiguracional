@@ -5,7 +5,7 @@
 #include <memory>
 
 #include "Graph.hpp"
-#include "Graphs.hpp"
+#include "ConfigurationalEntropy.hpp"
 
 namespace py = pybind11;
 
@@ -26,13 +26,10 @@ PYBIND11_MODULE(boost_graph, m) {
 		.def("print_graph", &Graph::print_graph)
 	;
 
-	py::class_<Graphs>(m, "Graphs")
-		.def(py::init<int, int, const Graph &, int, int, bool, bool, bool, const py::array_t<double> &, const py::array_t<double> &>())
-		.def("insert", &Graphs::insert)
-		.def("generate_subgraphs", &Graphs::generate_subgraphs)
-		.def("check_isomorfism", &Graphs::check_isomorfism)
-		.def("add_positions", &Graphs::add_positions)
-		.def("init_search", &Graphs::init_search)
-		.def("calculate_configurational_entropy", &Graphs::calculate_configurational_entropy)
+	py::class_<ConfigurationalEntropy>(m, "ConfigurationalEntropy")
+		.def(py::init<const Graph &, int, int, bool, bool, bool, const py::array_t<double> &, const py::array_t<double> &>())
+		.def("add_positions", &ConfigurationalEntropy::add_positions)
+		.def("init_search", &ConfigurationalEntropy::init_search)
+		.def("calculate", &ConfigurationalEntropy::calculate)
 	;
 }

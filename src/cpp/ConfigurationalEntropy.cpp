@@ -1,12 +1,6 @@
-#include "Graphs.hpp"
+#include "ConfigurationalEntropy.hpp"
 
-double calc_shannon_entropy(double Hn, double fi, double m) {
-	double pi = fi / m;
-	Hn -= (pi * log(pi));
-	return Hn;
-}
-
-const Point Graphs::generate_random_point() {
+const Point ConfigurationalEntropy::generate_random_point() {
 	Point rp;
 	std::get<0>(rp) = _distrX(_generator);
 	std::get<1>(rp) = _distrY(_generator);
@@ -14,25 +8,26 @@ const Point Graphs::generate_random_point() {
 	return rp;
 }
 
-py::tuple Graphs::calculate_configurational_entropy(double c) {
-	Vector2D<int> closestNeighbors = this->get_closest_neighbors();
-	this->generate_subgraphs(closestNeighbors);
-	return this->check_isomorfism(c);
+py::tuple ConfigurationalEntropy::calculate(int m, int n, double c) {
+	Vector2D<int> closestNeighbors = this->get_closest_neighbors(m, n);
+	Vector<Graph> graphs(m);
+	this->generate_subgraphs(graphs, closestNeighbors);
+	return this->check_isomorfism(graphs, c, m, n);
 }
 
-const Vector2D<int> Graphs::get_closest_neighbors() {
-	Vector2D<int> closestNeighbors(_m);
-	for (int i = 0; i < _m; ++i) {
+const Vector2D<int> ConfigurationalEntropy::get_closest_neighbors(int m, int n) {
+	Vector2D<int> closestNeighbors(m);
+	for (int i = 0; i < m; ++i) {
 		Point rp = this->generate_random_point();
 		double x = std::get<0>(rp);
 		double y = std::get<1>(rp);
 		double z = std::get<2>(rp);
-		closestNeighbors[i] = this->search_nearest_neighbors(x, y, z, _n);
+		closestNeighbors[i] = this->search_nearest_neighbors(x, y, z, n);
 	}
 	return closestNeighbors;
 }
 
-void Graphs::generate_subgraphs(const Vector2D<int> & closestNeighbors) {
+void ConfigurationalEntropy::generate_subgraphs(Vector<Graph> & graphs, const Vector2D<int> & closestNeighbors) {
 	int pos = 0;
 	for (const auto & nClosestNeighbors : closestNeighbors) {
 		Graph graph = Graph();
@@ -51,32 +46,33 @@ void Graphs::generate_subgraphs(const Vector2D<int> & closestNeighbors) {
 			}
 		}
 
-		this->insert(pos++, graph);
+		// check size ?
+		graphs[pos++] = graph;
 	}
 }
 
-py::tuple Graphs::check_isomorfism(double c) {
+py::tuple ConfigurationalEntropy::check_isomorfism(Vector<Graph> & graphs, double c, int m, int n) {
 	std::map<int, int> label_total;
 	int iso_label = 1;
 
-	int size = _graphs.size();
+	int size = graphs.size();
 	for (int i = 0; i < size; ++i) {
 		for (int j = i + 1; j < size; ++j) {
-			int iso_label_i = _graphs[i].get_iso_label();
-			int iso_label_j = _graphs[j].get_iso_label();
+			int iso_label_i = graphs[i].get_iso_label();
+			int iso_label_j = graphs[j].get_iso_label();
 
 			if (iso_label_i == 0 || iso_label_j == 0) {
-				if (is_isomorphic(*_graphs[i].getGraph(), *_graphs[j].getGraph())) {
+				if (is_isomorphic(*graphs[i].getGraph(), *graphs[j].getGraph())) {
 					if (iso_label_i == 0 && iso_label_j == 0) {
-						_graphs[i].set_iso_label(iso_label);
-						_graphs[j].set_iso_label(iso_label);
+						graphs[i].set_iso_label(iso_label);
+						graphs[j].set_iso_label(iso_label);
 						label_total[iso_label] = 2;
 						iso_label += 1; // label already used
 					} else if (iso_label_i > 0 && iso_label_j == 0) {
-						_graphs[j].set_iso_label(iso_label_i);
+						graphs[j].set_iso_label(iso_label_i);
 						label_total[iso_label_i] += 1;
 					} else if (iso_label_j > 0 && iso_label_i == 0) {
-						_graphs[i].set_iso_label(iso_label_j);
+						graphs[i].set_iso_label(iso_label_j);
 						label_total[iso_label_j] += 1;
 					} else if (iso_label_i != iso_label_j) {
 						std::cout << "Error while checking isomorphism:\nlabelGi " << iso_label_i << " : labelGj " << iso_label_j << "\n";
@@ -87,7 +83,7 @@ py::tuple Graphs::check_isomorfism(double c) {
 	}
 
 	// get all graphs that are not isomorphic with any other
-	for (const auto & g : _graphs) {
+	for (const auto & g : graphs) {
 		if (g.get_iso_label() == 0) {
 			label_total[iso_label] = 1;
 			iso_label += 1;
@@ -97,9 +93,9 @@ py::tuple Graphs::check_isomorfism(double c) {
 	double H_n = 0.0, H1n = 0.0;
 	for (int i = 1; i < iso_label; ++i) {
 		double fi = double(label_total[i]);
-		H_n = calc_shannon_entropy(H_n, fi, _m);
+		H_n = this->calc_shannon_entropy(H_n, fi, m);
 		if (fi == 1.0) {
-			H1n = calc_shannon_entropy(H1n, fi, _m);
+			H1n = this->calc_shannon_entropy(H1n, fi, m);
 		}
 	}
 
@@ -109,7 +105,7 @@ py::tuple Graphs::check_isomorfism(double c) {
 	}
 
 	double H_n_extrapolated = H_n + (c * H1nDiv);
-	double g_n = 2 * log(_n); // (spatial_dimensions - 1)
+	double g_n = 2 * log(n); // (spatial_dimensions - 1)
 	double Hc_n = H_n_extrapolated - g_n;
 
 	bool valid = true;
@@ -118,4 +114,10 @@ py::tuple Graphs::check_isomorfism(double c) {
 	}
 
 	return py::make_tuple(Hc_n, valid);
+}
+
+double ConfigurationalEntropy::calc_shannon_entropy(double Hn, double fi, double m) {
+	double pi = fi / m;
+	Hn -= (pi * log(pi));
+	return Hn;
 }
