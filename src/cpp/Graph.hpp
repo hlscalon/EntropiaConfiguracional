@@ -26,22 +26,47 @@ template <typename T>
 using Vector2D = Vector<Vector<T>>;
 
 struct Graph {
-	Graph() : isoLabel(0), graph(std::make_shared<UndirectedGraph>()) {}
+	Graph() : isoLabel(0), qty(1), graph(std::make_shared<UndirectedGraph>()) {}
 
-	inline std::shared_ptr<UndirectedGraph> getGraph() const { return graph; }
-	inline int get_iso_label() const { return isoLabel; }
-	inline void set_iso_label(int _isoLabel) { isoLabel = _isoLabel; }
+	inline std::shared_ptr<UndirectedGraph> getGraph() const {
+		return graph;
+	}
+
+	inline int get_iso_label() const {
+		return isoLabel;
+	}
+
+	inline void set_iso_label(int _isoLabel) {
+		isoLabel = _isoLabel;
+	}
+
+	inline void add_qty(int _qty) {
+		qty += _qty;
+	}
+
+	inline int get_qty() const {
+		return qty;
+	}
+
 	VertexDescriptor add_node(int node);
+
 	void add_edge(int e1, int e2);
+
 	bool has_node(int node) const;
+
 	Vector<int> get_neighbors(int node) const;
+
 	bool has_neighbor(int node, int neighbor);
+
 	int get_total_nodes() const;
+
 	int get_total_edges() const;
+
 	void print_graph() const;
 
 private:
 	int isoLabel;
+	int qty;
 	std::shared_ptr<UndirectedGraph> graph;
 	std::map<int, VertexDescriptor> mVertexDesc;
 };

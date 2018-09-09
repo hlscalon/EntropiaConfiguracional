@@ -33,7 +33,9 @@ void Graph::add_edge(int e1, int e2) {
 		ve2 = itE2->second;
 	}
 
-	boost::add_edge(ve1, ve2, *this->graph);
+	if (!boost::edge(ve1, ve2, *this->graph).second) {
+		boost::add_edge(ve1, ve2, *this->graph);
+	}
 }
 
 bool Graph::has_node(int node) const {
@@ -49,6 +51,7 @@ bool Graph::has_neighbor(int node, int neighbor) {
 
 Vector<int> Graph::get_neighbors(int node) const {
 	Vector<int> neighbors;
+	neighbors.reserve(5); // provavelmente nao vai ter mais vizinhos que isso
 
 	auto it = mVertexDesc.find(node); // int, VertexDescriptor
 	if (it == mVertexDesc.end()) { return neighbors; }

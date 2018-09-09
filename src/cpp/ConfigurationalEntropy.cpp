@@ -14,8 +14,10 @@ py::tuple ConfigurationalEntropy::calculate(int m, int n, double c) {
 }
 
 const Vector<Graph> ConfigurationalEntropy::get_subgraphs(int m, int n) {
-	Vector<Graph> graphs(m);
+	Vector<Graph> graphs;
+	graphs.reserve(m); // aloca para o maximo possivel
 
+	std::map<Vector<int>, int> graphsGen;
 	for (int i = 0; i < m; ++i) {
 		Point rp = this->generate_random_point();
 		double x = std::get<0>(rp);
@@ -24,7 +26,15 @@ const Vector<Graph> ConfigurationalEntropy::get_subgraphs(int m, int n) {
 
 		Vector<int> closestNeighbors = this->search_nearest_neighbors(x, y, z, n);
 
-		graphs[i] = this->generate_subgraph(closestNeighbors);
+		std::sort(closestNeighbors.begin(), closestNeighbors.end());
+
+		auto itFound = graphsGen.find(closestNeighbors);
+		if (itFound != graphsGen.end()) {
+			graphs[itFound->second].add_qty(1);
+		} else {
+			graphsGen.emplace(closestNeighbors, graphs.size());
+			graphs.push_back(this->generate_subgraph(closestNeighbors));
+		}
 	}
 
 	return graphs;
@@ -66,14 +76,14 @@ py::tuple ConfigurationalEntropy::check_isomorfism(Vector<Graph> & graphs, doubl
 					if (iso_label_i == 0 && iso_label_j == 0) {
 						graphs[i].set_iso_label(iso_label);
 						graphs[j].set_iso_label(iso_label);
-						label_total[iso_label] = 2;
+						label_total[iso_label] = graphs[i].get_qty() + graphs[j].get_qty();
 						iso_label += 1; // label already used
 					} else if (iso_label_i > 0 && iso_label_j == 0) {
 						graphs[j].set_iso_label(iso_label_i);
-						label_total[iso_label_i] += 1;
+						label_total[iso_label_i] += graphs[j].get_qty();
 					} else if (iso_label_j > 0 && iso_label_i == 0) {
 						graphs[i].set_iso_label(iso_label_j);
-						label_total[iso_label_j] += 1;
+						label_total[iso_label_j] += graphs[i].get_qty();
 					} else if (iso_label_i != iso_label_j) {
 						std::cout << "Error while checking isomorphism:\nlabelGi " << iso_label_i << " : labelGj " << iso_label_j << "\n";
 					}
