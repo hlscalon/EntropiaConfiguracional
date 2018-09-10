@@ -19,7 +19,7 @@ void SearchTree::init_search(double xMin, double xMax, double yMin, double yMax,
 	_particles.init_neighbour_search(min, max, periodic);
 }
 
-Vector<int> SearchTree::search_nearest_neighbors(double x, double y, double z, unsigned int n) {
+Vector<int> SearchTree::search_nearest_neighbors(float x, float y, float z, unsigned int n) {
 	using Pair = std::pair<double, int>;
 	std::set<Pair> distNeighbors;
 	std::unordered_set<int> uniqueNeighbors;

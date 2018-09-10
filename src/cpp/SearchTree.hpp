@@ -14,7 +14,6 @@ namespace py = pybind11;
 
 using Particle_t = Aboria::Particles<std::tuple<>, 3, std::vector, Aboria::Kdtree>;
 using Particle_position = Particle_t::position;
-using Point = std::tuple<double, double, double>;
 
 template <typename T>
 using Vector = std::vector<T>;
@@ -25,7 +24,7 @@ struct SearchTree {
 
 	void add_positions(const py::array_t<double> & positions);
 	void init_search(double xMin, double xMax, double yMin, double yMax, double zMin, double zMax);
-	Vector<int> search_nearest_neighbors(double x, double y, double z, unsigned int n);
+	Vector<int> search_nearest_neighbors(float x, float y, float z, unsigned int n);
 
 private:
 	int _nDimensions;
