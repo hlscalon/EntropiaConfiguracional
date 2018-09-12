@@ -21,60 +21,38 @@ py::tuple ConfigurationalEntropy::calculate(int m, int n, double c) {
 }
 
 const Vector<Graph> ConfigurationalEntropy::get_subgraphs(int m, int n) {
-	Vector<Graph> graphs;
-	graphs.reserve(m); // aloca para o maximo possivel
+	std::map<Vector<int>, int> differentGraphs;
+	std::map<Point, Vector<int>> nearestNeighborsFromPoint;
 
-	std::map<Vector<int>, int> graphsGen;
-	std::map<Point, Vector<int>> nearestNeighbors;
-
-	omp_lock_t writelock;
-
-	omp_init_lock(&writelock);
-
-	#pragma omp parallel for shared(graphs, graphsGen, nearestNeighbors)
 	for (int i = 0; i < m; ++i) {
 		Point rp = this->generate_random_point(1);
 
-		Vector<int> closestNeighbors;
+		Vector<int> nearestNeighbors;
 
-		omp_set_lock(&writelock);
-		auto itNN = nearestNeighbors.find(rp);
-		if (itNN != nearestNeighbors.end()) {
-			closestNeighbors = itNN->second;
-			omp_unset_lock(&writelock);
+		auto itNN = nearestNeighborsFromPoint.find(rp);
+		if (itNN != nearestNeighborsFromPoint.end()) {
+			nearestNeighbors = itNN->second;
 		} else {
-			omp_unset_lock(&writelock);
-
 			float x = std::get<0>(rp); float y = std::get<1>(rp); float z = std::get<2>(rp);
-			closestNeighbors = this->search_nearest_neighbors(x, y, z, n);
-			std::sort(closestNeighbors.begin(), closestNeighbors.end());
-
-			omp_set_lock(&writelock);
-			nearestNeighbors[rp] = closestNeighbors;
-			omp_unset_lock(&writelock);
+			nearestNeighbors = this->search_nearest_neighbors(x, y, z, n);
+			std::sort(nearestNeighbors.begin(), nearestNeighbors.end());
+			nearestNeighborsFromPoint[rp] = nearestNeighbors;
 		}
 
-		omp_set_lock(&writelock);
-
-		auto itFound = graphsGen.find(closestNeighbors);
-		if (itFound != graphsGen.end()) {
-			graphs[itFound->second].add_qty(1);
-		} else {
-			graphsGen.emplace(closestNeighbors, graphs.size());
-			graphs.push_back(this->generate_subgraph(closestNeighbors));
-		}
-
-		omp_unset_lock(&writelock);
+		differentGraphs[nearestNeighbors]++;
 	}
 
-	omp_destroy_lock(&writelock);
+	Vector<Graph> graphs(differentGraphs.size());
+	auto it = differentGraphs.begin();
+	for (int i = 0; it != differentGraphs.end(); ++it, ++i) {
+		this->generate_subgraph(graphs[i], it->first);
+		graphs[i].add_qty(it->second - 1);
+	}
 
 	return graphs;
 }
 
-Graph ConfigurationalEntropy::generate_subgraph(const Vector<int> & closestNeighbors) {
-	Graph graph;
-
+Graph ConfigurationalEntropy::generate_subgraph(Graph & graph, const Vector<int> & closestNeighbors) {
 	for (const auto & node : closestNeighbors) {
 		if (_completeGraph.has_node(node)) {
 			if (!graph.has_node(node)) {
