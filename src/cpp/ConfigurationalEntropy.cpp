@@ -72,8 +72,8 @@ Graph ConfigurationalEntropy::generate_subgraph(Graph & graph, const Vector<int>
 }
 
 py::tuple ConfigurationalEntropy::check_isomorfism(Vector<Graph> & graphs, double c, int m, int n) {
-	std::map<int, int> label_total;
 	int iso_label = 1;
+	Vector<int> v_label_total(m); // inicia todos no zero (maximo)
 
 	int size = graphs.size();
 	for (int i = 0; i < size; ++i) {
@@ -81,38 +81,48 @@ py::tuple ConfigurationalEntropy::check_isomorfism(Vector<Graph> & graphs, doubl
 			int iso_label_i = graphs[i].get_iso_label();
 			int iso_label_j = graphs[j].get_iso_label();
 
-			if (iso_label_i == 0 || iso_label_j == 0) {
-				if (is_isomorphic(*graphs[i].getGraph(), *graphs[j].getGraph())) {
-					if (iso_label_i == 0 && iso_label_j == 0) {
-						graphs[i].set_iso_label(iso_label);
-						graphs[j].set_iso_label(iso_label);
-						label_total[iso_label] = graphs[i].get_qty() + graphs[j].get_qty();
-						iso_label += 1; // label already used
-					} else if (iso_label_i > 0 && iso_label_j == 0) {
-						graphs[j].set_iso_label(iso_label_i);
-						label_total[iso_label_i] += graphs[j].get_qty();
-					} else if (iso_label_j > 0 && iso_label_i == 0) {
-						graphs[i].set_iso_label(iso_label_j);
-						label_total[iso_label_j] += graphs[i].get_qty();
-					} else if (iso_label_i != iso_label_j) {
-						std::cout << "Error while checking isomorphism:\nlabelGi " << iso_label_i << " : labelGj " << iso_label_j << "\n";
-					}
-				}
+			// nao serao isomorfos
+			if (iso_label_i != 0 && iso_label_j != 0) {
+				continue;
 			}
+
+			if (!is_isomorphic(*graphs[i].getGraph(), *graphs[j].getGraph())) {
+				continue;
+			}
+
+			if (iso_label_i == 0 && iso_label_j == 0) {
+				graphs[i].set_iso_label(iso_label);
+				graphs[j].set_iso_label(iso_label);
+
+				v_label_total[iso_label] = graphs[i].get_qty() + graphs[j].get_qty();
+
+				iso_label += 1; // label already used
+			} else if (iso_label_i > 0 && iso_label_j == 0) {
+				graphs[j].set_iso_label(iso_label_i);
+
+				v_label_total[iso_label_i] += graphs[j].get_qty();
+			} else if (iso_label_j > 0 && iso_label_i == 0) {
+				graphs[i].set_iso_label(iso_label_j);
+
+				v_label_total[iso_label_j] += graphs[i].get_qty();
+			} else if (iso_label_i != iso_label_j) {
+				std::cout << "Error while checking isomorphism:\nlabelGi " << iso_label_i << " : labelGj " << iso_label_j << "\n";
+			}
+
 		}
 	}
 
 	// get all graphs that are not isomorphic with any other
 	for (const auto & g : graphs) {
 		if (g.get_iso_label() == 0) {
-			label_total[iso_label] = 1;
+			v_label_total[iso_label] = 1;
 			iso_label += 1;
 		}
 	}
 
 	double H_n = 0.0, H1n = 0.0;
 	for (int i = 1; i < iso_label; ++i) {
-		double fi = double(label_total[i]);
+		double fi = double(v_label_total[i]);
 		H_n = this->calc_shannon_entropy(H_n, fi, m);
 		if (fi == 1.0) {
 			H1n = this->calc_shannon_entropy(H1n, fi, m);
