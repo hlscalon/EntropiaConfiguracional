@@ -33,13 +33,13 @@ struct ConfigurationalEntropy {
 			_distrZ = std::uniform_real_distribution<float>(_dMin(2), _dMax(2));
 	}
 
-	py::tuple check_isomorfism(Vector<Graph> & graphs, double c, int m, int n);
+	void check_isomorfism(Vector<Graph> & graphs, Graph & graph, int & iso_label, Vector<int> & label_total, int size);
 
 	py::tuple calculate(int m, int n, double c);
 
 	const Point generate_random_point(int precision);
 
-	const Vector<Graph> get_subgraphs(int m, int n);
+	const std::tuple<int, Vector<int>> generate_subgraphs(int m, int n);
 
 	Graph generate_subgraph(Graph & graph, const Vector<int> & closestNeighbors);
 

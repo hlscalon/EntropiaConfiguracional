@@ -16,109 +16,9 @@ const Point ConfigurationalEntropy::generate_random_point(int precision) {
 }
 
 py::tuple ConfigurationalEntropy::calculate(int m, int n, double c) {
-	Vector<Graph> graphs = this->get_subgraphs(m, n);
-	return this->check_isomorfism(graphs, c, m, n);
-}
-
-const Vector<Graph> ConfigurationalEntropy::get_subgraphs(int m, int n) {
-	std::map<Vector<int>, int> differentGraphs;
-	std::map<Point, Vector<int>> nearestNeighborsFromPoint;
-
-	for (int i = 0; i < m; ++i) {
-		Point rp = this->generate_random_point(1);
-
-		Vector<int> nearestNeighbors;
-
-		auto itNN = nearestNeighborsFromPoint.find(rp);
-		if (itNN != nearestNeighborsFromPoint.end()) {
-			nearestNeighbors = itNN->second;
-		} else {
-			float x = std::get<0>(rp); float y = std::get<1>(rp); float z = std::get<2>(rp);
-			nearestNeighbors = this->search_nearest_neighbors(x, y, z, n);
-			std::sort(nearestNeighbors.begin(), nearestNeighbors.end());
-			nearestNeighborsFromPoint[rp] = nearestNeighbors;
-		}
-
-		differentGraphs[nearestNeighbors]++;
-	}
-
-	Vector<Graph> graphs(differentGraphs.size());
-	auto it = differentGraphs.begin();
-	for (int i = 0; it != differentGraphs.end(); ++it, ++i) {
-		this->generate_subgraph(graphs[i], it->first);
-		graphs[i].add_qty(it->second - 1);
-	}
-
-	return graphs;
-}
-
-Graph ConfigurationalEntropy::generate_subgraph(Graph & graph, const Vector<int> & closestNeighbors) {
-	for (const auto & node : closestNeighbors) {
-		if (_completeGraph.has_node(node)) {
-			if (!graph.has_node(node)) {
-				graph.add_node(node);
-			}
-
-			const Vector<int> & neighbors = _completeGraph.get_neighbors(node); // fazer uma cache disso
-			for (const auto & neighbor : neighbors) {
-				if (std::find(closestNeighbors.begin(), closestNeighbors.end(), neighbor) != closestNeighbors.end()) {
-					graph.add_edge(node, neighbor);
-				}
-			}
-		}
-	}
-
-	return graph;
-}
-
-py::tuple ConfigurationalEntropy::check_isomorfism(Vector<Graph> & graphs, double c, int m, int n) {
-	int iso_label = 1;
-	Vector<int> v_label_total(m); // inicia todos no zero (maximo)
-
-	int size = graphs.size();
-	for (int i = 0; i < size; ++i) {
-		for (int j = i + 1; j < size; ++j) {
-			int iso_label_i = graphs[i].get_iso_label();
-			int iso_label_j = graphs[j].get_iso_label();
-
-			// nao serao isomorfos
-			if (iso_label_i != 0 && iso_label_j != 0) {
-				continue;
-			}
-
-			if (!is_isomorphic(*graphs[i].getGraph(), *graphs[j].getGraph())) {
-				continue;
-			}
-
-			if (iso_label_i == 0 && iso_label_j == 0) {
-				graphs[i].set_iso_label(iso_label);
-				graphs[j].set_iso_label(iso_label);
-
-				v_label_total[iso_label] = graphs[i].get_qty() + graphs[j].get_qty();
-
-				iso_label += 1; // label already used
-			} else if (iso_label_i > 0 && iso_label_j == 0) {
-				graphs[j].set_iso_label(iso_label_i);
-
-				v_label_total[iso_label_i] += graphs[j].get_qty();
-			} else if (iso_label_j > 0 && iso_label_i == 0) {
-				graphs[i].set_iso_label(iso_label_j);
-
-				v_label_total[iso_label_j] += graphs[i].get_qty();
-			} else if (iso_label_i != iso_label_j) {
-				std::cout << "Error while checking isomorphism:\nlabelGi " << iso_label_i << " : labelGj " << iso_label_j << "\n";
-			}
-
-		}
-	}
-
-	// get all graphs that are not isomorphic with any other
-	for (const auto & g : graphs) {
-		if (g.get_iso_label() == 0) {
-			v_label_total[iso_label] = 1;
-			iso_label += 1;
-		}
-	}
+	std::tuple<int, Vector<int>> ret = this->generate_subgraphs(m, n);
+	int iso_label = std::get<0>(ret);
+	Vector<int> v_label_total = std::get<1>(ret);
 
 	double H_n = 0.0, H1n = 0.0;
 	for (int i = 1; i < iso_label; ++i) {
@@ -144,6 +44,95 @@ py::tuple ConfigurationalEntropy::check_isomorfism(Vector<Graph> & graphs, doubl
 	}
 
 	return py::make_tuple(Hc_n, valid);
+}
+
+const std::tuple<int, Vector<int>> ConfigurationalEntropy::generate_subgraphs(int m, int n) {
+	std::map<Vector<int>, int> differentGraphs;
+	std::map<Point, Vector<int>> nearestNeighborsFromPoint;
+
+	for (int i = 0; i < m; ++i) {
+		Point rp = this->generate_random_point(1);
+
+		Vector<int> nearestNeighbors;
+
+		auto itNN = nearestNeighborsFromPoint.find(rp);
+		if (itNN != nearestNeighborsFromPoint.end()) {
+			nearestNeighbors = itNN->second;
+		} else {
+			float x = std::get<0>(rp); float y = std::get<1>(rp); float z = std::get<2>(rp);
+			nearestNeighbors = this->search_nearest_neighbors(x, y, z, n);
+			std::sort(nearestNeighbors.begin(), nearestNeighbors.end());
+			nearestNeighborsFromPoint[rp] = nearestNeighbors;
+		}
+
+		differentGraphs[nearestNeighbors]++;
+	}
+
+	int iso_label = 1;
+	Vector<int> label_total(m); // inicia todos no zero (maximo)
+	Vector<Graph> graphs(differentGraphs.size());
+	auto it = differentGraphs.begin();
+	for (int i = 0; it != differentGraphs.end(); ++it, ++i) {
+		this->generate_subgraph(graphs[i], it->first);
+		graphs[i].add_qty(it->second - 1);
+		this->check_isomorfism(graphs, graphs[i], iso_label, label_total, i);
+	}
+
+	// get all graphs that are not isomorphic with any other
+	for (const auto & g : graphs) {
+		if (g.get_iso_label() == 0) {
+			label_total[iso_label] = 1;
+			iso_label += 1;
+		}
+	}
+
+	return {iso_label, label_total};
+}
+
+Graph ConfigurationalEntropy::generate_subgraph(Graph & graph, const Vector<int> & closestNeighbors) {
+	for (const auto & node : closestNeighbors) {
+		if (_completeGraph.has_node(node)) {
+			if (!graph.has_node(node)) {
+				graph.add_node(node);
+			}
+
+			const Vector<int> & neighbors = _completeGraph.get_neighbors(node); // fazer uma cache disso
+			for (const auto & neighbor : neighbors) {
+				if (std::find(closestNeighbors.begin(), closestNeighbors.end(), neighbor) != closestNeighbors.end()) {
+					graph.add_edge(node, neighbor);
+				}
+			}
+		}
+	}
+
+	return graph;
+}
+
+void ConfigurationalEntropy::check_isomorfism(Vector<Graph> & graphs, Graph & graph, int & iso_label, Vector<int> & label_total, int size) {
+	UndirectedGraph undirected_graph = *graph.getGraph();
+
+	for (int i = 0; i < size; ++i) {
+		int iso_label_i = graphs[i].get_iso_label();
+
+		if (!is_isomorphic(*graphs[i].getGraph(), undirected_graph)) {
+			continue;
+		}
+
+		if (iso_label_i == 0) {
+			graph.set_iso_label(iso_label);
+			graphs[i].set_iso_label(iso_label);
+
+			label_total[iso_label] = graphs[i].get_qty() + graph.get_qty();
+			iso_label += 1; // label already used
+
+			break;
+		} else if (iso_label_i > 0) {
+			graph.set_iso_label(iso_label_i);
+			label_total[iso_label_i] += graph.get_qty();
+
+			break;
+		}
+	}
 }
 
 double ConfigurationalEntropy::calc_shannon_entropy(double Hn, double fi, double m) {
