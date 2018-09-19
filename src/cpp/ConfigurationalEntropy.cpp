@@ -111,26 +111,29 @@ Graph ConfigurationalEntropy::generate_subgraph(Graph & graph, const Vector<int>
 void ConfigurationalEntropy::check_isomorfism(Vector<Graph> & graphs, Graph & graph, int & iso_label, Vector<int> & label_total, int size) {
 	UndirectedGraph undirected_graph = *graph.getGraph();
 
+	std::atomic<int> idx(-1);
+
+	#pragma omp parallel for
 	for (int i = 0; i < size; ++i) {
-		int iso_label_i = graphs[i].get_iso_label();
+		if (idx >= 0) continue;
 
-		if (!is_isomorphic(*graphs[i].getGraph(), undirected_graph)) {
-			continue;
+		if (is_isomorphic(*graphs[i].getGraph(), undirected_graph)) {
+			idx = i;
 		}
+	}
 
-		if (iso_label_i == 0) {
+	if (idx >= 0) {
+		int iso_label_idx = graphs[idx].get_iso_label();
+
+		if (iso_label_idx == 0) {
 			graph.set_iso_label(iso_label);
-			graphs[i].set_iso_label(iso_label);
+			graphs[idx].set_iso_label(iso_label);
 
-			label_total[iso_label] = graphs[i].get_qty() + graph.get_qty();
+			label_total[iso_label] = graphs[idx].get_qty() + graph.get_qty();
 			iso_label += 1; // label already used
-
-			break;
-		} else if (iso_label_i > 0) {
-			graph.set_iso_label(iso_label_i);
-			label_total[iso_label_i] += graph.get_qty();
-
-			break;
+		} else if (iso_label_idx > 0) {
+			graph.set_iso_label(iso_label_idx);
+			label_total[iso_label_idx] += graph.get_qty();
 		}
 	}
 }
