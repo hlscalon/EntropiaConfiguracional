@@ -79,7 +79,7 @@ const std::tuple<int, Vector<int>> ConfigurationalEntropy::generate_subgraphs(in
 	}
 
 	int size = auxDiffGraphs.size();
-	Vector2D<bool> graphsIso(size, Vector<bool>(size));
+	Vector2D<uint8_t> graphsIso(size, Vector<uint8_t>(size));
 
 	#pragma omp parallel
 	{
@@ -95,9 +95,31 @@ const std::tuple<int, Vector<int>> ConfigurationalEntropy::generate_subgraphs(in
 			for (int j = 0; j < size; ++j) {
 				if (j <= i) continue;
 
+				if (graphsIso[i][j] > 0 && graphsIso[j][i] > 0) {
+					continue;
+				}
+
+				int iso = 0;
 				if (is_isomorphic(*graphs[i].getGraph(), *graphs[j].getGraph())) {
-					graphsIso[i][j] = true;
-					graphsIso[j][i] = true;
+					graphsIso[i][j] = 2; graphsIso[j][i] = 2;
+
+					// seta todos isomorfos com i e j para 2
+					iso = 2;
+				} else {
+					graphsIso[i][j] = 1; graphsIso[j][i] = 1;
+
+					// seta todos nao isomorfos com i e j para 1
+					iso = 1;
+				}
+
+				for (int k = 0; k < size; ++k) {
+					if (graphsIso[i][k] == 2 || graphsIso[k][i] == 2) {
+						graphsIso[j][k] = iso; graphsIso[k][j] = iso;
+					}
+
+					if (graphsIso[j][k] == 2 || graphsIso[k][j] == 2) {
+						graphsIso[i][k] = iso; graphsIso[k][i] = iso;
+					}
 				}
 			}
 		}
@@ -115,7 +137,7 @@ const std::tuple<int, Vector<int>> ConfigurationalEntropy::generate_subgraphs(in
 						continue;
 					}
 
-		 			if (!graphsIso[i][j]) {
+		 			if (graphsIso[i][j] < 2) {
 						continue;
 					}
 
