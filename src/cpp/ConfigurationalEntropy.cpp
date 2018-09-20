@@ -71,11 +71,72 @@ const std::tuple<int, Vector<int>> ConfigurationalEntropy::generate_subgraphs(in
 	int iso_label = 1;
 	Vector<int> label_total(m); // inicia todos no zero (maximo)
 	Vector<Graph> graphs(differentGraphs.size());
+
+	Vector<std::map<Vector<int>, int>::iterator> auxDiffGraphs(differentGraphs.size());
 	auto it = differentGraphs.begin();
 	for (int i = 0; it != differentGraphs.end(); ++it, ++i) {
-		this->generate_subgraph(graphs[i], it->first);
-		graphs[i].add_qty(it->second - 1);
-		this->check_isomorfism(graphs, graphs[i], iso_label, label_total, i);
+		auxDiffGraphs[i] = it;
+	}
+
+	int size = auxDiffGraphs.size();
+	Vector2D<bool> graphsIso(size, Vector<bool>(size));
+
+	#pragma omp parallel
+	{
+		#pragma omp for
+		for (int i = 0; i < size; ++i) {
+			auto it = auxDiffGraphs[i];
+			this->generate_subgraph(graphs[i], it->first);
+			graphs[i].add_qty(it->second - 1);
+		}
+
+		#pragma omp for collapse(2)
+		for (int i = 0; i < size; ++i) {
+			for (int j = 0; j < size; ++j) {
+				if (j <= i) continue;
+
+				if (is_isomorphic(*graphs[i].getGraph(), *graphs[j].getGraph())) {
+					graphsIso[i][j] = true;
+					graphsIso[j][i] = true;
+				}
+			}
+		}
+
+		// sincronizar tudo
+		#pragma omp single
+		{
+			for (int i = 0; i < size; ++i) {
+				for (int j = i + 1; j < size; ++j) {
+					int iso_label_i = graphs[i].get_iso_label();
+					int iso_label_j = graphs[j].get_iso_label();
+
+					// nao serao isomorfos
+					if (iso_label_i != 0 && iso_label_j != 0) {
+						continue;
+					}
+
+		 			if (!graphsIso[i][j]) {
+						continue;
+					}
+
+		 			if (iso_label_i == 0 && iso_label_j == 0) {
+						graphs[i].set_iso_label(iso_label);
+						graphs[j].set_iso_label(iso_label);
+		 				label_total[iso_label] = graphs[i].get_qty() + graphs[j].get_qty();
+		 				iso_label += 1; // label already used
+					} else if (iso_label_i > 0 && iso_label_j == 0) {
+						graphs[j].set_iso_label(iso_label_i);
+		 				label_total[iso_label_i] += graphs[j].get_qty();
+					} else if (iso_label_j > 0 && iso_label_i == 0) {
+						graphs[i].set_iso_label(iso_label_j);
+		 				label_total[iso_label_j] += graphs[i].get_qty();
+					} else if (iso_label_i != iso_label_j) {
+						std::cout << "Error while checking isomorphism:\nlabelGi " << iso_label_i << " : labelGj " << iso_label_j << "\n";
+					}
+
+				}
+			}
+		}
 	}
 
 	// get all graphs that are not isomorphic with any other
