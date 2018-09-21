@@ -101,23 +101,18 @@ const std::tuple<int, Vector<int>> ConfigurationalEntropy::generate_subgraphs(in
 
 				int iso = 0;
 				if (is_isomorphic(*graphs[i].getGraph(), *graphs[j].getGraph())) {
-					graphsIso[i][j] = 2; graphsIso[j][i] = 2;
-
 					// seta todos isomorfos com i e j para 2
 					iso = 2;
 				} else {
-					graphsIso[i][j] = 1; graphsIso[j][i] = 1;
-
 					// seta todos nao isomorfos com i e j para 1
 					iso = 1;
 				}
 
+				graphsIso[i][j] = iso; graphsIso[j][i] = iso;
 				for (int k = 0; k < size; ++k) {
 					if (graphsIso[i][k] == 2 || graphsIso[k][i] == 2) {
 						graphsIso[j][k] = iso; graphsIso[k][j] = iso;
-					}
-
-					if (graphsIso[j][k] == 2 || graphsIso[k][j] == 2) {
+					} else if (graphsIso[j][k] == 2 || graphsIso[k][j] == 2) {
 						graphsIso[i][k] = iso; graphsIso[k][i] = iso;
 					}
 				}
