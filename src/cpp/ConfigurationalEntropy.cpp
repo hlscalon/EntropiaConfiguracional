@@ -1,6 +1,6 @@
 #include "ConfigurationalEntropy.hpp"
 
-#include <omp.h>
+#include <parallel/algorithm>
 
 const Point ConfigurationalEntropy::generate_random_point(int precision) {
 	auto round = [](float number, int precision) {
@@ -111,17 +111,11 @@ Graph ConfigurationalEntropy::generate_subgraph(Graph & graph, const Vector<int>
 void ConfigurationalEntropy::check_isomorfism(Vector<Graph> & graphs, Graph & graph, int & iso_label, Vector<int> & label_total, int size) {
 	UndirectedGraph undirected_graph = *graph.getGraph();
 
-	std::atomic<int> idx(-1);
+	auto itIdx = __gnu_parallel::find_if(graphs.begin(), graphs.begin() + size, [&undirected_graph](const Graph & g) {
+		return is_isomorphic(*g.getGraph(), undirected_graph);
+	});
 
-	#pragma omp parallel for
-	for (int i = 0; i < size; ++i) {
-		if (idx >= 0) continue;
-
-		if (is_isomorphic(*graphs[i].getGraph(), undirected_graph)) {
-			idx = i;
-		}
-	}
-
+	int idx = itIdx == graphs.begin() + size ? -1 : itIdx - graphs.begin();
 	if (idx >= 0) {
 		int iso_label_idx = graphs[idx].get_iso_label();
 
