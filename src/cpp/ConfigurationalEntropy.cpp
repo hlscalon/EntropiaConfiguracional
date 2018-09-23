@@ -1,6 +1,5 @@
 #include "ConfigurationalEntropy.hpp"
-
-#include <parallel/algorithm>
+#include "FindIsomorphicIndex.hpp"
 
 const Point ConfigurationalEntropy::generate_random_point(int precision) {
 	auto round = [](float number, int precision) {
@@ -71,11 +70,13 @@ const std::tuple<int, Vector<int>> ConfigurationalEntropy::generate_subgraphs(in
 	int iso_label = 1;
 	Vector<int> label_total(m); // inicia todos no zero (maximo)
 	Vector<Graph> graphs(differentGraphs.size());
+	Vector<UndirectedGraph> uGraphs(differentGraphs.size());
 	auto it = differentGraphs.begin();
 	for (int i = 0; it != differentGraphs.end(); ++it, ++i) {
 		this->generate_subgraph(graphs[i], it->first);
 		graphs[i].add_qty(it->second - 1);
-		this->check_isomorfism(graphs, graphs[i], iso_label, label_total, i);
+		uGraphs[i] = *graphs[i].getGraph();
+		this->check_isomorfism(graphs, uGraphs, graphs[i], iso_label, label_total, i);
 	}
 
 	// get all graphs that are not isomorphic with any other
@@ -108,14 +109,18 @@ Graph ConfigurationalEntropy::generate_subgraph(Graph & graph, const Vector<int>
 	return graph;
 }
 
-void ConfigurationalEntropy::check_isomorfism(Vector<Graph> & graphs, Graph & graph, int & iso_label, Vector<int> & label_total, int size) {
-	UndirectedGraph undirected_graph = *graph.getGraph();
+void ConfigurationalEntropy::check_isomorfism(Vector<Graph> & graphs, const Vector<UndirectedGraph> & uGraphs, Graph & graph, int & iso_label, Vector<int> & label_total, int size) {
+	UndirectedGraph uGraph = *graph.getGraph();
 
-	auto itIdx = __gnu_parallel::find_if(graphs.begin(), graphs.begin() + size, [&undirected_graph](const Graph & g) {
-		return is_isomorphic(*g.getGraph(), undirected_graph);
+	/*
+	auto itIdx = __gnu_parallel::find_if(graphs.begin(), graphs.begin() + size, [&uGraph](const Graph & g) {
+		return is_isomorphic(*g.getGraph(), uGraph);
 	});
 
 	int idx = itIdx == graphs.begin() + size ? -1 : itIdx - graphs.begin();
+	*/
+
+	int idx = findIsomorphicIndex(uGraphs, uGraph, size);
 	if (idx >= 0) {
 		int iso_label_idx = graphs[idx].get_iso_label();
 

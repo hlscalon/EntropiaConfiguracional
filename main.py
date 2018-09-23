@@ -4,8 +4,9 @@ from src.python.configurational_entropy import startMeasurement
 from src.python.calculate_from_measurement import calculateFromMeasurement
 
 """
-python2 main.py N arquivos_xyz/fcc.xyz 1.12 0 3 10 Y
+python2 main.py N arquivos_xyz/fcc.xyz 1.12 0 3 15 Y
 time python2 main.py N arquivos_xyz/fcc.xyz 1.12 0 3 30 Y
+time python2 main.py N arquivos_xyz/fcc750.xyz 1.12 0 3 20 Y
 python2 main.py Y medicoes/med_fcc.xyz_3_9_2018_7_58_35.ce
 python2 -m cProfile -s time main.py N arquivos_xyz/fcc.xyz 1.12 0 3 10 Y
 python2 -m yep --  main.py N arquivos_xyz/fcc.xyz 1.12 0 3 15 Y
