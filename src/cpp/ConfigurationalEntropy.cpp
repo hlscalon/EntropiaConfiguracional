@@ -76,6 +76,10 @@ const std::tuple<int, Vector<int>> ConfigurationalEntropy::generate_subgraphs(in
 		this->generate_subgraph(graphs[i], it->first);
 		graphs[i].add_qty(it->second - 1);
 		this->check_isomorfism(graphs, graphs[i], iso_label, label_total, i);
+
+		#ifdef DEBUG
+		graphs[i].print_graph();
+		#endif
 	}
 
 	// get all graphs that are not isomorphic with any other

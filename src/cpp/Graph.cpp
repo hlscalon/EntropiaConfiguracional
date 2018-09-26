@@ -16,6 +16,10 @@ VertexDescriptor Graph::add_node(int node) {
 }
 
 void Graph::add_edge(int e1, int e2) {
+	if (e1 == e2) {
+		return;
+	}
+
 	// if vertices are not present, add them
 	auto itE1 = mVertexDesc.find(e1);
 	VertexDescriptor ve1;
@@ -42,11 +46,24 @@ bool Graph::has_node(int node) const {
 	return mVertexDesc.find(node) != mVertexDesc.end();
 }
 
-bool Graph::has_neighbor(int node, int neighbor) {
-	if (mVertexDesc.find(node) == mVertexDesc.end()) { return false; }
-	if (mVertexDesc.find(neighbor) == mVertexDesc.end()) { return false; }
+bool Graph::has_neighbor(int node, int neighbor) const {
+	auto itNode = mVertexDesc.find(node);
+	VertexDescriptor vNode;
+	if (itNode == mVertexDesc.end()) {
+		return false;
+	} else {
+		vNode = itNode->second;
+	}
 
-	return boost::edge(mVertexDesc[node], mVertexDesc[neighbor], *this->graph).second;
+	auto itNeighbor = mVertexDesc.find(neighbor);
+	VertexDescriptor vNeighbor;
+	if (itNeighbor == mVertexDesc.end()) {
+		return false;
+	} else {
+		vNeighbor = itNeighbor->second;
+	}
+
+	return boost::edge(vNode, vNeighbor, *this->graph).second;
 }
 
 Vector<int> Graph::get_neighbors(int node) const {

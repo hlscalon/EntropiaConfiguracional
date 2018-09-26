@@ -1,0 +1,15 @@
+density=2200.000100 kg per m3
+
+silicon coordination:
+4       1000    100.000000
+
+oxygen coordination:
+2       2000    100.000000
+
+Si-O bond length:       1.610266 +/- 0.041729
+O-Si-O bond angle:      109.375448 +/- 5.792572
+Si-O-Si bond angle:     153.006445 +/- 12.223911
+
+sisi coordination = 4.000000 +/- 0.000000
+oo coordination = 5.907000 +/- 0.329167
+

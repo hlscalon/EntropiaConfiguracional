@@ -1,0 +1,102 @@
+*****************************************************
+3000 ATOM VITREOUS SILICA MODEL AT ZERO TEMPERATURE
+*****************************************************
+
+More info: 
+
+R.L.C. Vink and G.T. Barkema, Large well-relaxed models of vitreous
+silica, coordination numbers and entropy (2002).
+
+http://xxx.lanl.gov/abs/cond-mat/0212215 
+
+If you use these networks in published research, please cite the above    
+article.
+
+vink@phys.uu.nl
+
+Enjoy,
+  RV
+
+**************************************************************************
+FILE: 3k.sio2 
+
+This file contains the atomic coordinates of the model. The file format is
+explained below. First a header of the form:
+
+BOX=48.025330
+en=-1162070.883648
+NS=20000
+NO=40000
+
+* where BOX is HALF the boxsize of the (periodic) cubic simulation volume
+* en is the BKS energy of the network
+* NS is the number of silicon atoms
+* NO is the number of oxygen atoms
+
+Then come the atomic coordinates in the form:
+
+xx	yy	zz
+
+The first NS lines contain the coordinates of the silicon atoms; the
+remaining lines oxygen coordinates. All coordinates are within the range
+-BOX to +BOX. Everything is in Angstrom.
+**************************************************************************
+
+**************************************************************************
+FILE: info
+
+Some structural properties of the model. I think the units speak for 
+themselves. The variations given are rms. All based on 1.80 Angstrom for 
+the Si-O bond-length cut-off.
+**************************************************************************
+
+**************************************************************************
+FILE: rdf.txt
+
+The radial distribution (RDF) and total correlation function T of the
+model in very high resolution (not suitable for direct comparison to
+experimental data). The file format is as follows:
+
+r  g(SiSi)  g(SiO)  g(OO)  Txray  Tneut
+
+r        = distance in Angstrom
+g(SiSi)  = density normalized RDF for Si-Si correlations
+g(SiO)   = density normalized RDF for Si-O correlations
+g(OO)    = density normalized RDF for O-O correlations
+Txray    = total correlation function for xray scattering
+Tneut    = total correlation function for neutron scattering
+**************************************************************************
+
+**************************************************************************
+FILE: structure.txt
+
+The total interference function of the model. Really nothing more than the 
+Fourier transform of Txray and Tneut in rdf.txt. The format is as follows:
+
+Q	Qi(xray)	Qi(neut)
+
+Q        = inverse wavelength in inverse Angstrom
+Qi(xray) = total interference function for xray scattering
+Qi(neut) = total interference function for neutron scattering
+**************************************************************************
+
+**************************************************************************
+FILE: rdf.ft
+
+The neutron correlation function obtained via FT of the neutron
+interference function (stored in structure.txt), using QMAX=45.2 inverse
+angstrom.
+**************************************************************************
+
+
+**************************************************************************
+FILE: bond.dist
+
+The O-Si-O and Si-O-Si bond angle distributions. First the O-Si-O 
+distribution in the form:
+
+angle	occurrence
+
+Then two blank lines followed by the Si-O-Si distibution in the same form.
+**************************************************************************
+

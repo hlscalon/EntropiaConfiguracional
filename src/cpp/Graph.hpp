@@ -56,7 +56,7 @@ struct Graph {
 
 	Vector<int> get_neighbors(int node) const;
 
-	bool has_neighbor(int node, int neighbor);
+	bool has_neighbor(int node, int neighbor) const;
 
 	int get_total_nodes() const;
 

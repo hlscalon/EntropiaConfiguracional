@@ -6,6 +6,8 @@
 #include <pybind11/numpy.h>
 #include <Aboria.h>
 
+#include "Graph.hpp"
+
 #include <vector>
 #include <random>
 #include <tuple>
@@ -24,7 +26,7 @@ struct SearchTree {
 
 	void add_positions(const py::array_t<double> & positions);
 	void init_search(double xMin, double xMax, double yMin, double yMax, double zMin, double zMax);
-	Vector<int> search_nearest_neighbors(float x, float y, float z, unsigned int n);
+	Vector<int> search_nearest_neighbors(float x, float y, float z, unsigned int n, const Graph & completeGraph);
 
 private:
 	int _nDimensions;

@@ -52,7 +52,7 @@ struct ConfigurationalEntropy {
 	}
 
 	inline Vector<int> search_nearest_neighbors(float x, float y, float z, unsigned int n) {
-		return _searchTree.search_nearest_neighbors(x, y, z, n);
+		return _searchTree.search_nearest_neighbors(x, y, z, n, _completeGraph);
 	}
 
 	double calc_shannon_entropy(double Hn, double fi, double m);

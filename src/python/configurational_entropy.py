@@ -1,12 +1,14 @@
 import sys
 import boost_graph as bg
 import matplotlib.pyplot as plt
+import networkx as nx
 
 from measurement import Measurement
 from ase import Atom
 from ase.io import read
 from ase.data import covalent_radii
 from ase.geometry import is_orthorhombic
+from ase.visualize import view
 from math import log
 from operator import itemgetter
 from random import uniform
@@ -55,6 +57,66 @@ def generateGraphFromSlab(slab, covalent_radii_cut_off):
 
 	return graph
 
+def generateGraphFromSlabVinkFile(slab, covalent_radii_cut_off):
+	all_distances = slab.get_all_distances(mic=True)
+	atomic_numbers = slab.get_atomic_numbers()
+
+	mapping = {}
+	for atom1, distances in enumerate(all_distances):
+		if atomic_numbers[atom1] == 14: # Si
+			atom1_cr = covalent_radii[atomic_numbers[atom1]]
+			for atom2, distance in enumerate(distances):
+				if atom1 == atom2:
+					continue
+
+				if atomic_numbers[atom2] != 8:
+					continue
+
+				atom2_cr = covalent_radii[atomic_numbers[atom2]]
+				# if the distance between two atoms is less than the sum of their covalent radii, they are considered bonded.
+				if (distance < ((atom1_cr + atom2_cr) * covalent_radii_cut_off)):
+					try:
+						mapping[atom1][atom2] = True
+					except KeyError:
+						mapping[atom1] = {}
+						mapping[atom1][atom2] = True
+						pass
+
+					try:
+						mapping[atom2][atom1] = True
+					except KeyError:
+						mapping[atom2] = {}
+						mapping[atom2][atom1] = True
+						pass
+
+	graph = bg.Graph()
+	graphNx = nx.Graph()
+	for atom1, at1 in enumerate(slab):
+		if atomic_numbers[atom1] == 14: # Si
+			if not graph.has_node(atom1):
+				graph.add_node(atom1) # add nodes not bonded
+				graphNx.add_node(atom1) # add nodes not bonded
+
+			for n1_o in mapping[atom1]:
+				if atomic_numbers[n1_o] == 8: # O
+					for n2_si in mapping[n1_o]:
+						if atomic_numbers[n2_si] == 14: # Si
+							if atom1 != n2_si:
+								graph.add_edge(atom1, n2_si)
+								graphNx.add_edge(atom1, n2_si)
+
+	#view(slab)
+
+	# remove O atomos
+	del slab[[atom.index for atom in slab if atom.symbol == 'O']]
+
+	#view(slab)
+
+	#nx.draw(graphNx, with_labels=True, font_weigth='bold')
+	#plt.show()
+
+	return graph
+
 def calculateConfigurationalEntropy(n1, n2, xy_polyfit, hcn_values):
 	(x_p, y_p) = zip(*xy_polyfit)
 	x_p = asarray(x_p)
@@ -84,7 +146,9 @@ def startMeasurement(filepath, covalent_radii_cut_off, c, n1, n2, calculate):
 
 	print("Slab %s read with success" % filepath)
 
-	G = generateGraphFromSlab(slab, covalent_radii_cut_off)
+	# G = generateGraphFromSlab(slab, covalent_radii_cut_off)
+	G = generateGraphFromSlabVinkFile(slab, covalent_radii_cut_off)
+
 	total_nodes = G.get_total_nodes()
 	if total_nodes == 0 or G.get_total_edges() == 0:
 		print("No edges found in graph. Check covalent_radii_cut_off")
