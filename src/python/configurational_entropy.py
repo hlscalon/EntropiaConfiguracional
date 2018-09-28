@@ -61,6 +61,8 @@ def generateGraphFromSlabVinkFile(slab, covalent_radii_cut_off):
 	all_distances = slab.get_all_distances(mic=True)
 	atomic_numbers = slab.get_atomic_numbers()
 
+	# so funciona se os atomos Si vierem antes dos de O (numeracao / aboria / grafo)
+
 	mapping = {}
 	for atom1, distances in enumerate(all_distances):
 		if atomic_numbers[atom1] == 14: # Si
@@ -69,51 +71,48 @@ def generateGraphFromSlabVinkFile(slab, covalent_radii_cut_off):
 				if atom1 == atom2:
 					continue
 
-				if atomic_numbers[atom2] != 8:
+				# so pega atomos de O
+				if atomic_numbers[atom2] != 8: # O
 					continue
 
 				atom2_cr = covalent_radii[atomic_numbers[atom2]]
 				# if the distance between two atoms is less than the sum of their covalent radii, they are considered bonded.
 				if (distance < ((atom1_cr + atom2_cr) * covalent_radii_cut_off)):
 					try:
-						mapping[atom1][atom2] = True
+						mapping[atom1].append(atom2)
 					except KeyError:
-						mapping[atom1] = {}
-						mapping[atom1][atom2] = True
-						pass
+						mapping[atom1] = []
+						mapping[atom1].append(atom2)
 
 					try:
-						mapping[atom2][atom1] = True
+						mapping[atom2].append(atom1)
 					except KeyError:
-						mapping[atom2] = {}
-						mapping[atom2][atom1] = True
-						pass
+						mapping[atom2] = []
+						mapping[atom2].append(atom1)
 
 	graph = bg.Graph()
-	graphNx = nx.Graph()
-	for atom1, at1 in enumerate(slab):
-		if atomic_numbers[atom1] == 14: # Si
-			if not graph.has_node(atom1):
-				graph.add_node(atom1) # add nodes not bonded
-				graphNx.add_node(atom1) # add nodes not bonded
+	# graphNx = nx.Graph()
+	for atom1 in slab:
+		if atom1.symbol == 'Si':
+			if not graph.has_node(atom1.index):
+				graph.add_node(atom1.index) # add nodes not bonded
+				# graphNx.add_node(atom1.index) # add nodes not bonded
 
-			for n1_o in mapping[atom1]:
-				if atomic_numbers[n1_o] == 8: # O
-					for n2_si in mapping[n1_o]:
-						if atomic_numbers[n2_si] == 14: # Si
-							if atom1 != n2_si:
-								graph.add_edge(atom1, n2_si)
-								graphNx.add_edge(atom1, n2_si)
+		for n1_o in mapping[atom1.index]:
+			if atomic_numbers[n1_o] == 8: # O
+				for n2_si in mapping[n1_o]:
+					if atomic_numbers[n2_si] == 14: # Si
+						if atom1.index != n2_si:
+							graph.add_edge(atom1.index, n2_si)
+							# graphNx.add_edge(atom1.index, n2_si)
 
-	#view(slab)
-
+	# view(slab)
 	# remove O atomos
 	del slab[[atom.index for atom in slab if atom.symbol == 'O']]
 
-	#view(slab)
-
-	#nx.draw(graphNx, with_labels=True, font_weigth='bold')
-	#plt.show()
+	# view(slab)
+	# nx.draw(graphNx, with_labels=True, font_weigth='bold')
+	# plt.show()
 
 	return graph
 
