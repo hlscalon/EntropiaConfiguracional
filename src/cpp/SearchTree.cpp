@@ -24,27 +24,11 @@ Vector<int> SearchTree::search_nearest_neighbors(float x, float y, float z, unsi
 	std::set<Pair> distNeighbors;
 	std::unordered_set<int> uniqueNeighbors;
 
-	auto checkIsNeighbor = [&completeGraph](const std::unordered_set<int> & uN, int node) {
-		if (uN.size() == 0) return true;
-
-		for (const auto & n : uN) {
-			if (n != node && completeGraph.has_neighbor(n, node)) {
-				return true;
-			}
-		}
-
-		return false;
-	};
-
 	double radius = 3; // optimize this value?
 	int maxRadius = 5;
 	do {
 		for (auto i = Aboria::euclidean_search(_particles.get_query(), Aboria::vdouble3(x, y, z), radius); i != false; ++i) {
 			int node = Aboria::get<Aboria::id>(*i);
-			if (!checkIsNeighbor(uniqueNeighbors, node)) {
-				continue;
-			}
-
 			auto inserted = distNeighbors.emplace(Pair{(i.dx()).norm(), node});
 			if (inserted.second) {
 				uniqueNeighbors.emplace(inserted.first->second);
@@ -59,28 +43,72 @@ Vector<int> SearchTree::search_nearest_neighbors(float x, float y, float z, unsi
 	} while (radius <= maxRadius && radius <= _largestRadius);
 
 	#ifdef DEBUG
-	std::cout << "x = " << x << " \ty = " << y << " \tz = " << z << " \tN = ";
+	std::cout << "distNeighbors = ";
+	for (const auto & d : distNeighbors) std::cout << d.second << " ";
+	std::cout.precision(2);
+	std::cout << "\nx = " << std::fixed << x << " \t\ty = " << y << " \t\tz = " << z << " \t\tN = \n";
 	#endif
 
-	Vector<int> neighbors(n); int idxNeighbors = 0;
-	std::set<int> alreadyReturned;
-	for (const auto & neighbor : distNeighbors) {
-		auto inserted = alreadyReturned.emplace(neighbor.second);
-		if (inserted.second) {
-			neighbors[idxNeighbors++] = neighbor.second;
+	auto checkIsNeighbor = [&](const Vector<int> & neighbors, int node) {
+		if (neighbors.size() == 0) return true;
 
-			#ifdef DEBUG
-			std::cout << neighbor.second << " ";
-			#endif
-
-			if (alreadyReturned.size() >= n) {
-				break;
+		for (const auto & n : neighbors) {
+			if (n != node && completeGraph.has_neighbor(n, node)) {
+				return true;
 			}
 		}
+
+		return false;
+	};
+
+	Vector<int> neighbors;
+	neighbors.reserve(n);
+
+	bool achouAlgum = false, pararBusca = false; // cada passada tem que achar 1 pelo menos (loop infinito)
+	int i = 0;
+	comecar_denovo:
+	do {
+		achouAlgum = false;
+		// for (const auto & neighbor : distNeighbors) {
+		auto itneighbors = distNeighbors.begin();
+		std::advance(itneighbors, i);
+
+		for (; itneighbors != distNeighbors.end(); ++itneighbors) {
+			auto neighbor = *itneighbors;
+			if (!checkIsNeighbor(neighbors, neighbor.second)) {
+				continue;
+			}
+
+			if (std::find(neighbors.begin(), neighbors.end(), neighbor.second) == neighbors.end()) {
+				achouAlgum = true;
+				neighbors.push_back(neighbor.second);
+
+				if (neighbors.size() >= n) {
+					pararBusca = true;
+					break;
+				}
+			}
+		}
+	} while (achouAlgum && !pararBusca);
+
+	if (i < static_cast<int>(distNeighbors.size() - n) && neighbors.size() < n) {
+		achouAlgum = false; pararBusca = false;
+		i++;
+
+		#ifdef DEBUG
+		std::cout << "N Intermediario = ";
+		for (const auto & n : neighbors) std::cout << n << ";";
+		std::cout << "\n\n";
+		#endif
+
+		neighbors.clear();
+		goto comecar_denovo;
 	}
 
 	#ifdef DEBUG
-	std::cout << "\n";
+	std::cout << "N Final = ";
+	for (const auto & n : neighbors) std::cout << n << ";";
+	std::cout << "\n\n";
 	#endif
 
 	return neighbors;

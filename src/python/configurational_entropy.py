@@ -91,12 +91,12 @@ def generateGraphFromSlabVinkFile(slab, covalent_radii_cut_off):
 						mapping[atom2].append(atom1)
 
 	graph = bg.Graph()
-	# graphNx = nx.Graph()
+	graphNx = nx.Graph()
 	for atom1 in slab:
 		if atom1.symbol == 'Si':
 			if not graph.has_node(atom1.index):
 				graph.add_node(atom1.index) # add nodes not bonded
-				# graphNx.add_node(atom1.index) # add nodes not bonded
+				graphNx.add_node(atom1.index) # add nodes not bonded
 
 		for n1_o in mapping[atom1.index]:
 			if atomic_numbers[n1_o] == 8: # O
@@ -104,15 +104,17 @@ def generateGraphFromSlabVinkFile(slab, covalent_radii_cut_off):
 					if atomic_numbers[n2_si] == 14: # Si
 						if atom1.index != n2_si:
 							graph.add_edge(atom1.index, n2_si)
-							# graphNx.add_edge(atom1.index, n2_si)
+							graphNx.add_edge(atom1.index, n2_si)
 
-	# view(slab)
+	view(slab)
+
 	# remove O atomos
 	del slab[[atom.index for atom in slab if atom.symbol == 'O']]
 
 	# view(slab)
-	# nx.draw(graphNx, with_labels=True, font_weigth='bold')
-	# plt.show()
+
+	nx.draw(graphNx, with_labels=True, font_weigth='bold')
+	plt.show()
 
 	return graph
 

@@ -95,18 +95,18 @@ void Graph::print_graph() const {
 	std::cout << boost::num_vertices(*this->graph) << "\n";
 	std::pair<VertexIterator, VertexIterator> vi = boost::vertices(*this->graph);
 	for (VertexIterator vertex_iter = vi.first; vertex_iter != vi.second; ++vertex_iter) {
-		std::cout << "(" << (*this->graph)[*vertex_iter] << ")\n";
+		std::cout << "(" << (*this->graph)[*vertex_iter] << ") ";
 	}
 
-	std::cout << "edges:\n";
+	std::cout << "\nedges:\n";
 	std::cout << boost::num_edges(*this->graph) << "\n";
 
 	std::pair<EdgeIterator, EdgeIterator> ei = boost::edges(*this->graph);
 	for (EdgeIterator edge_iter = ei.first; edge_iter != ei.second; ++edge_iter) {
 		VertexDescriptor vs = boost::source(*edge_iter, *this->graph);
 		VertexDescriptor vt = boost::target(*edge_iter, *this->graph);
-		std::cout << "(" << (*this->graph)[vs] << ", " << (*this->graph)[vt] << ")\n";
+		std::cout << "(" << (*this->graph)[vs] << ", " << (*this->graph)[vt] << ") ";
 	}
 
-	std::cout << "-----------------------------\n";
+	std::cout << "\n-----------------------------\n";
 }
