@@ -47,7 +47,7 @@ py::tuple ConfigurationalEntropy::calculate(int m, int n, double c) {
 }
 
 const std::tuple<int, Vector<int>> ConfigurationalEntropy::generate_subgraphs(int m, int n) {
-	std::map<Vector<int>, int> differentGraphs;
+	std::map<Vector<int>, Graph> differentGraphs;
 	std::map<Point, Vector<int>> nearestNeighborsFromPoint;
 
 	for (int i = 0; i < m; ++i) {
@@ -66,19 +66,16 @@ const std::tuple<int, Vector<int>> ConfigurationalEntropy::generate_subgraphs(in
 		}
 
 		// testa antes de colocar
-		bool adicionar = true;
 		if (differentGraphs.find(nearestNeighbors) == differentGraphs.end()) {
-			Graph newGraph;
-			this->generate_subgraph(newGraph, nearestNeighbors);
-			if (!newGraph.is_connected()) {
-				adicionar = false;
+			Graph graph;
+			this->generate_subgraph(graph, nearestNeighbors);
+			if (!graph.is_connected()) {
+				i--; // continua na mesma iteracao, gera outro ponto aleatorio
+			} else {
+				differentGraphs[nearestNeighbors] = graph;
 			}
-		}
-
-		if (adicionar) {
-			differentGraphs[nearestNeighbors]++;
 		} else {
-			i--;
+			differentGraphs[nearestNeighbors].add_qty(1);
 		}
 	}
 
@@ -87,8 +84,7 @@ const std::tuple<int, Vector<int>> ConfigurationalEntropy::generate_subgraphs(in
 	Vector<Graph> graphs(differentGraphs.size());
 	auto it = differentGraphs.begin();
 	for (int i = 0; it != differentGraphs.end(); ++it, ++i) {
-		this->generate_subgraph(graphs[i], it->first);
-		graphs[i].add_qty(it->second - 1);
+		graphs[i] = it->second;
 		this->check_isomorfism(graphs, graphs[i], iso_label, label_total, i);
 
 		#ifdef DEBUG
