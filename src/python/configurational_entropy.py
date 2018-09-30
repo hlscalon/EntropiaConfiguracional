@@ -98,13 +98,16 @@ def generateGraphFromSlabVinkFile(slab, covalent_radii_cut_off):
 				graph.add_node(atom1.index) # add nodes not bonded
 				graphNx.add_node(atom1.index) # add nodes not bonded
 
-		for n1_o in mapping[atom1.index]:
-			if atomic_numbers[n1_o] == 8: # O
-				for n2_si in mapping[n1_o]:
-					if atomic_numbers[n2_si] == 14: # Si
-						if atom1.index != n2_si:
-							graph.add_edge(atom1.index, n2_si)
-							graphNx.add_edge(atom1.index, n2_si)
+			try:
+				for n1_o in mapping[atom1.index]:
+					if atomic_numbers[n1_o] == 8: # O
+						for n2_si in mapping[n1_o]:
+							if atomic_numbers[n2_si] == 14: # Si
+								if atom1.index != n2_si:
+									graph.add_edge(atom1.index, n2_si)
+									graphNx.add_edge(atom1.index, n2_si)
+			except KeyError:
+				pass
 
 	view(slab)
 

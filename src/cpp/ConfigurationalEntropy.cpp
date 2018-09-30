@@ -65,7 +65,21 @@ const std::tuple<int, Vector<int>> ConfigurationalEntropy::generate_subgraphs(in
 			nearestNeighborsFromPoint[rp] = nearestNeighbors;
 		}
 
-		differentGraphs[nearestNeighbors]++;
+		// testa antes de colocar
+		bool adicionar = true;
+		if (differentGraphs.find(nearestNeighbors) == differentGraphs.end()) {
+			Graph newGraph;
+			this->generate_subgraph(newGraph, nearestNeighbors);
+			if (!newGraph.is_connected()) {
+				adicionar = false;
+			}
+		}
+
+		if (adicionar) {
+			differentGraphs[nearestNeighbors]++;
+		} else {
+			i--;
+		}
 	}
 
 	int iso_label = 1;
