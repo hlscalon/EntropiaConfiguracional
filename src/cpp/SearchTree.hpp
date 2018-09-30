@@ -27,6 +27,9 @@ struct SearchTree {
 	void add_positions(const py::array_t<double> & positions);
 	void init_search(double xMin, double xMax, double yMin, double yMax, double zMin, double zMax);
 	Vector<int> search_nearest_neighbors(float x, float y, float z, unsigned int n, const Graph & completeGraph);
+	const Vector<int> get_neighbors_connected(const Graph & g, const Vector<int> & vertices, unsigned int n);
+	std::pair<bool, Vector<int>> generate_all_combinations(const Graph & g, const Vector<int> & vertices, int size, unsigned int n);
+	bool check_is_connected(const Graph & g, const Vector<int> & verticesNewGraph);
 
 private:
 	int _nDimensions;
