@@ -1,6 +1,7 @@
 #include "Graph.hpp"
 
 #include <iostream>
+#include <boost/graph/connected_components.hpp>
 
 bool is_isomorphic(const UndirectedGraph & uGraph1, const UndirectedGraph & uGraph2) {
 	vf2_callback<UndirectedGraph, UndirectedGraph> callback(uGraph1, uGraph2);
@@ -13,6 +14,20 @@ VertexDescriptor Graph::add_node(int node) {
 	mVertexDesc[node] = v;
 
 	return v;
+}
+
+VertexDescriptor Graph::get_node_descriptor(int node) const {
+	auto itNode = mVertexDesc.find(node);
+	if (itNode != mVertexDesc.end()) {
+		return itNode->second;
+	}
+
+	return -1;
+}
+
+bool Graph::is_connected() const {
+    Vector<int> component(this->get_total_nodes());
+    return boost::connected_components(*this->graph, &component[0]) == 1;
 }
 
 void Graph::add_edge(int e1, int e2) {

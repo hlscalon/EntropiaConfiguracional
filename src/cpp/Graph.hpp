@@ -50,6 +50,10 @@ struct Graph {
 
 	VertexDescriptor add_node(int node);
 
+	VertexDescriptor get_node_descriptor(int node) const;
+
+	bool is_connected() const;
+
 	void add_edge(int e1, int e2);
 
 	bool has_node(int node) const;

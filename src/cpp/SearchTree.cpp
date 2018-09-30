@@ -21,26 +21,22 @@ void SearchTree::init_search(double xMin, double xMax, double yMin, double yMax,
 }
 
 bool SearchTree::check_is_connected(const Graph & g, const Vector<int> & verticesNewGraph) {
-	int total = verticesNewGraph.size();
-	for (int i = 0; i < total; ++i) {
-		int j = i + 1;
-		bool hasSomeNeighbor = j >= total; // ultima iteracao = sempre true
-		for (; j < total; ++j) {
-			// std::cout << "neighbor: " << verticesNewGraph[i] << " : " << verticesNewGraph[j] << " = ";
-			if (g.has_neighbor(verticesNewGraph[i], verticesNewGraph[j])) {
-				// std::cout << " yes\n";
-				hasSomeNeighbor = true;
-				break;
-			}
-			// std::cout << " no\n";
-		}
+	Graph newGraph;
 
-		if (!hasSomeNeighbor) {
-			return false;
+	for (const auto & v : verticesNewGraph) {
+		newGraph.add_node(v);
+	}
+
+	int size = verticesNewGraph.size();
+	for (int i = 0; i < size; ++i) {
+		for (int j = i + 1; j < size; ++j) {
+			if (g.has_neighbor(verticesNewGraph[i], verticesNewGraph[j])) {
+				newGraph.add_edge(verticesNewGraph[i], verticesNewGraph[j]);
+			}
 		}
 	}
 
-	return true;
+	return newGraph.is_connected();
 }
 
 std::pair<bool, Vector<int>> SearchTree::generate_all_combinations(const Graph & g, const Vector<int> & vertices, int size, unsigned int n) {
@@ -51,7 +47,9 @@ std::pair<bool, Vector<int>> SearchTree::generate_all_combinations(const Graph &
 	// print integers and permute bitmask
 	bool isConnected = false;
 	do {
-		// std::cout << "bitmask: "; for (int i = 0; i < size; i++) std::cout << (bitmask[i] ? "1" : "0"); std::cout << "\n";
+		#ifdef DEBUG
+		std::cout << "bitmask: "; for (int i = 0; i < size; i++) std::cout << (bitmask[i] ? "1" : "0"); std::cout << "\n";
+		#endif
 
 		verticesNewGraph.clear();
 		verticesNewGraph.reserve(n);
@@ -67,13 +65,17 @@ std::pair<bool, Vector<int>> SearchTree::generate_all_combinations(const Graph &
 		// std::cout << "is_connected: " << isConnected << "\n\n";
 	} while (std::prev_permutation(bitmask.begin(), bitmask.end()) && !isConnected);
 
+	#ifdef DEBUG
+	std::cout << "bitmask final: "; for (int i = 0; i < size; i++) std::cout << (bitmask[i] ? "1" : "0"); std::cout << "\n";
+	#endif
+
 	return {isConnected, verticesNewGraph};
 }
 
 const Vector<int> SearchTree::get_neighbors_connected(const Graph & g, const Vector<int> & vertices, unsigned int n) {
 	int i = n; // comeca com n primeiros
-	int N = vertices.size();
-	for (; i < N; ++i) {
+	int size = vertices.size();
+	for (; i <= size; ++i) {
 		Vector<int> verticesCheck(vertices.begin(), vertices.begin() + i);
 		auto ret = this->generate_all_combinations(g, verticesCheck, i, n);
 		if (ret.first) {
@@ -81,6 +83,10 @@ const Vector<int> SearchTree::get_neighbors_connected(const Graph & g, const Vec
 			return ret.second;
 		}
 	}
+
+	#ifdef DEBUG
+	std::cout << "nao achou. pegou n primeiros\n";
+	#endif
 
 	return {vertices.begin(), vertices.begin() + n}; // pega os n primeiros
 }
@@ -134,7 +140,19 @@ Vector<int> SearchTree::search_nearest_neighbors(float x, float y, float z, unsi
 		}
 	}
 
+	#ifdef DEBUG
+	std::cout << "neighborsSorted: ";
+	for (auto n : neighborsSorted) std::cout << n << " ";
+	std::cout << "\n";
+	#endif
+
 	Vector<int> neighbors = this->get_neighbors_connected(completeGraph, neighborsSorted, n);
+
+	#ifdef DEBUG
+	std::cout << "neighbors: ";
+	for (auto n : neighbors) std::cout << n << " ";
+	std::cout << "\n";
+	#endif
 
 	return neighbors;
 }
