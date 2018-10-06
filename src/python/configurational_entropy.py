@@ -109,15 +109,15 @@ def generateGraphFromSlabVinkFile(slab, covalent_radii_cut_off):
 			except KeyError:
 				pass
 
-	view(slab)
+	# printar a estrutura
+	# view(slab)
 
 	# remove O atomos
 	del slab[[atom.index for atom in slab if atom.symbol == 'O']]
 
-	# view(slab)
-
-	nx.draw(graphNx, with_labels=True, font_weigth='bold')
-	plt.show()
+	# printar grafo gerado pelo nx
+	# nx.draw(graphNx, with_labels=True, font_weigth='bold')
+	# plt.show()
 
 	return graph
 
@@ -181,10 +181,17 @@ def startMeasurement(filepath, covalent_radii_cut_off, c, n1, n2, calculate):
 	configurationalEntropy.init_search(0, cell[0][0], 0, cell[1][1], 0, cell[2][2])
 
 	for n in range(n1, n2):
-		m = n * n * total_nodes
+		measurement.start()
+
+		m = 3 * n * n * total_nodes
+		# m = (n/2) * (n/2) * total_nodes
 		(hcn, valid) = run(configurationalEntropy, m, n, c)
 
+		# valid = True # ALWAYS TRUE
+
 		measurement.writeResult(n, m, hcn, valid)
+
+		measurement.end()
 
 		hcn_values.append((n, hcn))
 		if valid:
