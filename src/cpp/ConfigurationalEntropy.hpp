@@ -11,6 +11,7 @@
 
 #include "Graph.hpp"
 #include "SearchTree.hpp"
+#include <nauty.h>
 
 namespace py = pybind11;
 
@@ -33,7 +34,7 @@ struct ConfigurationalEntropy {
 			_distrZ = std::uniform_real_distribution<float>(_dMin(2), _dMax(2));
 	}
 
-	void check_isomorfism(Vector<Graph> & graphs, Graph & graph, int & iso_label, Vector<int> & label_total, int size);
+	void check_isomorfism(Vector<Graph> & graphs, Graph & graph, const Vector<graph*> & ngraphs, int & iso_label, Vector<int> & label_total);
 
 	py::tuple calculate(int m, int n, double c);
 

@@ -1,6 +1,5 @@
 #include "ConfigurationalEntropy.hpp"
-
-#include <parallel/algorithm>
+#include "FindIsomorphicIndex.hpp"
 
 const Point ConfigurationalEntropy::generate_random_point(int precision) {
 	auto round = [](float number, int precision) {
@@ -90,17 +89,20 @@ const std::tuple<int, Vector<int>> ConfigurationalEntropy::generate_subgraphs(in
 	Vector<int> label_total(m); // inicia todos no zero (maximo)
 	Vector<Graph> graphs;
 	graphs.reserve(differentGraphs.size());
+	Vector<graph*> ngraphs; // not owned pointers (owned by graphs)
+	ngraphs.reserve(differentGraphs.size());
 
 	auto it = differentGraphs.begin();
 	for (int i = 0; it != differentGraphs.end(); ++it, ++i) {
 		Graph graphTmp(std::move(it->second));
-		this->check_isomorfism(graphs, graphTmp, iso_label, label_total, i);
+		this->check_isomorfism(graphs, graphTmp, ngraphs, iso_label, label_total);
 
 		#ifdef DEBUG
 		graphTmp.print_graph();
 		#endif
 
 		if (graphTmp.get_iso_label() == 0) { // nao achou iso
+			ngraphs.push_back(graphTmp.get_cannonical_label());
 			graphs.push_back(std::move(graphTmp));
 		}
 	}
@@ -133,12 +135,10 @@ void ConfigurationalEntropy::generate_subgraph(Graph & graph, const Vector<int> 
 	}
 }
 
-void ConfigurationalEntropy::check_isomorfism(Vector<Graph> & graphs, Graph & graph, int & iso_label, Vector<int> & label_total, int size) {
-	auto itIdx = __gnu_parallel::find_if(graphs.begin(), graphs.end(), [&graph](const Graph & g) {
-		return is_isomorphic(g, graph);
-	});
+void ConfigurationalEntropy::check_isomorfism(Vector<Graph> & graphs, Graph & graph, const Vector<graph*> & ngraphs, int & iso_label, Vector<int> & label_total) {
+	graph * clgraph = graph.get_cannonical_label();
 
-	int idx = itIdx == graphs.end() ? -1 : itIdx - graphs.begin();
+	int idx = find_isomorphic_index(ngraphs, clgraph, graph.get_total_nodes());
 	if (idx >= 0) {
 		int iso_label_idx = graphs[idx].get_iso_label();
 
