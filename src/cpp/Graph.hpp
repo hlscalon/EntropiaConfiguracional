@@ -95,7 +95,6 @@ struct vf2_callback {
 	}
 };
 
-bool is_isomorphic(const UndirectedGraph & uGraph1, const UndirectedGraph & uGraph2);
-// bool is_isomorphic(const Graph & graph1, const Graph & graph2);
+bool is_isomorphic(const Graph & graph1, const Graph & graph2);
 
 #endif /* GRAPH_HPP */

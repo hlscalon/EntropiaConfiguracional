@@ -78,7 +78,7 @@ const std::tuple<int, Vector<int>> ConfigurationalEntropy::generate_subgraphs(in
 			if (!graph.is_connected()) {
 				i--; // continua na mesma iteracao, gera outro ponto aleatorio
 			} else {
-				// graph.set_cannonical_label();
+				graph.set_cannonical_label();
 				differentGraphs[nearestNeighbors] = std::move(graph);
 			}
 		} else {
@@ -135,8 +135,7 @@ void ConfigurationalEntropy::generate_subgraph(Graph & graph, const Vector<int> 
 
 void ConfigurationalEntropy::check_isomorfism(Vector<Graph> & graphs, Graph & graph, int & iso_label, Vector<int> & label_total, int size) {
 	auto itIdx = __gnu_parallel::find_if(graphs.begin(), graphs.end(), [&graph](const Graph & g) {
-		//return is_isomorphic(g, graph);
-		return is_isomorphic(*g.get_ugraph(), *graph.get_ugraph());
+		return is_isomorphic(g, graph);
 	});
 
 	int idx = itIdx == graphs.end() ? -1 : itIdx - graphs.begin();

@@ -3,22 +3,16 @@
 #include <iostream>
 #include <boost/graph/connected_components.hpp>
 
-bool is_isomorphic(const UndirectedGraph & uGraph1, const UndirectedGraph & uGraph2) {
-	vf2_callback<UndirectedGraph, UndirectedGraph> callback(uGraph1, uGraph2);
+bool is_isomorphic(const Graph & graph1, const Graph & graph2) {
+	int n1 = graph1.get_total_nodes();
+	int n2 = graph2.get_total_nodes();
 
-	return vf2_graph_iso(uGraph1, uGraph2, callback);
+	if (n1 != n2) return false;
+
+	int m = SETWORDSNEEDED(n1);
+
+	return memcmp(graph1.get_cannonical_label(), graph2.get_cannonical_label(), m * sizeof(graph) * n1) == 0;
 }
-
-// bool is_isomorphic(const Graph & graph1, const Graph & graph2) {
-// 	int n1 = graph1.get_total_nodes();
-// 	int n2 = graph2.get_total_nodes();
-
-// 	if (n1 != n2) return false;
-
-// 	int m = SETWORDSNEEDED(n1);
-
-// 	return memcmp(graph1.get_cannonical_label(), graph2.get_cannonical_label(), m * sizeof(graph) * n1) == 0;
-// }
 
 void Graph::set_cannonical_label() {
 	static DEFAULTOPTIONS_GRAPH(options);
