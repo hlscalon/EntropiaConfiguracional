@@ -23,9 +23,11 @@ py::tuple ConfigurationalEntropy::calculate(int m, int n, double c) {
 	double H_n = 0.0, H1n = 0.0;
 	for (int i = 1; i < iso_label; ++i) {
 		double fi = double(v_label_total[i]);
+
+		double H_n_antes = H_n;
 		H_n = this->calc_shannon_entropy(H_n, fi, m);
 		if (fi == 1.0) {
-			H1n = this->calc_shannon_entropy(H1n, fi, m);
+			H1n += (H_n - H_n_antes);
 		}
 	}
 
@@ -39,9 +41,13 @@ py::tuple ConfigurationalEntropy::calculate(int m, int n, double c) {
 	double Hc_n = H_n_extrapolated - g_n;
 
 	bool valid = true;
-	if (H1n > (H_n / 100)) {
+	if (H1n > (H_n_extrapolated / 100)) {
 		valid = false;
 	}
+
+	#ifdef DEBUG
+	std::cout << "H1nDiv = " << H1nDiv << "; H_n_extrapolated = " << H_n_extrapolated << "; Hc_n = " << Hc_n << "; H1n = " << H1n << "; valid = " << valid << "\n";
+	#endif
 
 	return py::make_tuple(Hc_n, valid);
 }
@@ -81,22 +87,28 @@ const std::tuple<int, Vector<int>> ConfigurationalEntropy::generate_subgraphs(in
 
 	int iso_label = 1;
 	Vector<int> label_total(m); // inicia todos no zero (maximo)
-	Vector<Graph> graphs(differentGraphs.size());
+	Vector<Graph> graphs;
+	graphs.reserve(differentGraphs.size());
+
 	auto it = differentGraphs.begin();
 	for (int i = 0; it != differentGraphs.end(); ++it, ++i) {
-		graphs[i] = it->second;
-		this->check_isomorfism(graphs, graphs[i], iso_label, label_total, i);
+		Graph graphTmp(it->second);
+		this->check_isomorfism(graphs, graphTmp, iso_label, label_total, i);
+
+		if (graphTmp.get_iso_label() == 0) { // nao achou iso
+			graphs.push_back(graphTmp);
+		}
 
 		#ifdef DEBUG
-		graphs[i].print_graph();
+		graphTmp.print_graph();
 		#endif
 	}
 
 	// get all graphs that are not isomorphic with any other
 	for (const auto & g : graphs) {
 		if (g.get_iso_label() == 0) {
-			label_total[iso_label] = 1;
-			iso_label += 1;
+			label_total[iso_label] = g.get_qty();
+			iso_label++;
 		}
 	}
 
@@ -125,11 +137,11 @@ Graph ConfigurationalEntropy::generate_subgraph(Graph & graph, const Vector<int>
 void ConfigurationalEntropy::check_isomorfism(Vector<Graph> & graphs, Graph & graph, int & iso_label, Vector<int> & label_total, int size) {
 	UndirectedGraph undirected_graph = *graph.getGraph();
 
-	auto itIdx = __gnu_parallel::find_if(graphs.begin(), graphs.begin() + size, [&undirected_graph](const Graph & g) {
+	auto itIdx = __gnu_parallel::find_if(graphs.begin(), graphs.end(), [&undirected_graph](const Graph & g) {
 		return is_isomorphic(*g.getGraph(), undirected_graph);
 	});
 
-	int idx = itIdx == graphs.begin() + size ? -1 : itIdx - graphs.begin();
+	int idx = itIdx == graphs.end() ? -1 : itIdx - graphs.begin();
 	if (idx >= 0) {
 		int iso_label_idx = graphs[idx].get_iso_label();
 

@@ -6,11 +6,12 @@ from ase.io import read, write
 from ase.visualize import view
 from ase.data import covalent_radii
 
-slab = read("3k/3k-0-12-ase.xyz")
+# slab = read("3k/3k-0-12-ase.xyz")
+slab = read("../3k/3k-total-2.xyz")
 view(slab)
 # slab.wrap()
 # view(slab)
-# slab.write("3k/3k-ase.xyz")
+# slab.write("../3k/3k-total-2-ase.xyz")
 
 """
 Si-O = rc 1.8
@@ -21,8 +22,9 @@ cutoff = 3.6 -> 2.22 = 1.62
 """
 
 # criar arquivo com atomos dentro da cell
-"""
-cell = slab.get_cell()
+#"""
+#cell = slab.get_cell()
+cell = [[28.306773669, 0, 0], [0, 28.306773669, 0], [0, 0, 28.306773669]]
 novo_slab = ase.Atoms() #slab
 novo_slab.set_cell(cell)
 novo_slab.set_pbc(True)
@@ -33,16 +35,17 @@ for idx, atom in enumerate(slab):
 		novo_slab.append(atom)
 
 view(novo_slab)
-novo_slab.write("3k/3k-0-10-ase.xyz")
-"""
+novo_slab.write("../3k/3k-0-28-ase.xyz")
+#"""
 
 # verificar grafo gerado
-#"""
+"""
 covalent_radii_cut_off = 1.12
 all_distances = slab.get_all_distances(mic=True)
 atomic_numbers = slab.get_atomic_numbers()
 
 graph = nx.Graph()
+"""
 """
 for atom1, distances in enumerate(all_distances):
 	if not atom1 in graph:
@@ -55,6 +58,7 @@ for atom1, distances in enumerate(all_distances):
 			# if the distance between two atoms is less than the sum of their covalent radii, they are considered bonded.
 			if (distance < ((atom1_cr + atom2_cr) * covalent_radii_cut_off)):
 				graph.add_edge(atom1, atom2)
+"""
 """
 mapping = {}
 for atom1, distances in enumerate(all_distances):

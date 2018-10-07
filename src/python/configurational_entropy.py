@@ -197,8 +197,6 @@ def startMeasurement(filepath, covalent_radii_cut_off, c, n1, n2, calculate):
 		if valid:
 			xy_polyfit.append((n, hcn))
 
-	measurement.close()
-
 	if calculate == "Y":
 		calculateConfigurationalEntropy(n1, n2, xy_polyfit, hcn_values)
 

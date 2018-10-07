@@ -5,9 +5,10 @@ from src.python.calculate_from_measurement import calculateFromMeasurement
 
 """
 python2 main.py N arquivos_xyz/SILICA_SAMPLES/3k/3k-si-si.xyz 1.62 0 3 10 Y
-python2 main.py N arquivos_xyz/SILICA_SAMPLES/3k/si-si-0-17-ase.xyz 1.62 0 3 20 Y
-python2 main.py N arquivos_xyz/SILICA_SAMPLES/3k/3k-0-17-ase.xyz 1.12 0 3 15 Y
 python2 main.py N arquivos_xyz/SILICA_SAMPLES/3k/3k-0-12-ase.xyz 1.12 0 3 15 Y
+python2 main.py N arquivos_xyz/SILICA_SAMPLES/3k/3k-0-17-ase.xyz 1.12 0 3 15 Y
+python2 main.py N arquivos_xyz/SILICA_SAMPLES/3k/3k-0-35-ase.xyz 1.12 0 3 15 Y
+time python2 main.py N arquivos_xyz/SILICA_SAMPLES/3k/3k-total-2-ase.xyz 1.12 5 3 15 Y
 python2 main.py N arquivos_xyz/fcc.xyz 1.12 0 3 10 Y
 python2 main.py N arquivos_xyz/fcc.xyz 1.12 0 3 15 Y
 time python2 main.py N arquivos_xyz/fcc.xyz 1.12 0 3 30 Y
