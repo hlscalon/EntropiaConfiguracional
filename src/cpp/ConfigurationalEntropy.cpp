@@ -45,7 +45,7 @@ py::tuple ConfigurationalEntropy::calculate(int m, int n, double c) {
 		valid = false;
 	}
 
-	#ifdef DEBUG
+	#ifdef LOG
 	std::cout << "H1nDiv = " << H1nDiv << "; H_n_extrapolated = " << H_n_extrapolated << "; Hc_n = " << Hc_n << "; H1n = " << H1n << "; valid = " << valid << "\n";
 	#endif
 
@@ -78,7 +78,8 @@ const std::tuple<int, Vector<int>> ConfigurationalEntropy::generate_subgraphs(in
 			if (!graph.is_connected()) {
 				i--; // continua na mesma iteracao, gera outro ponto aleatorio
 			} else {
-				differentGraphs[nearestNeighbors] = graph;
+				// graph.set_cannonical_label();
+				differentGraphs[nearestNeighbors] = std::move(graph);
 			}
 		} else {
 			differentGraphs[nearestNeighbors].add_qty(1);
@@ -92,16 +93,16 @@ const std::tuple<int, Vector<int>> ConfigurationalEntropy::generate_subgraphs(in
 
 	auto it = differentGraphs.begin();
 	for (int i = 0; it != differentGraphs.end(); ++it, ++i) {
-		Graph graphTmp(it->second);
+		Graph graphTmp(std::move(it->second));
 		this->check_isomorfism(graphs, graphTmp, iso_label, label_total, i);
-
-		if (graphTmp.get_iso_label() == 0) { // nao achou iso
-			graphs.push_back(graphTmp);
-		}
 
 		#ifdef DEBUG
 		graphTmp.print_graph();
 		#endif
+
+		if (graphTmp.get_iso_label() == 0) { // nao achou iso
+			graphs.push_back(std::move(graphTmp));
+		}
 	}
 
 	// get all graphs that are not isomorphic with any other
@@ -115,7 +116,7 @@ const std::tuple<int, Vector<int>> ConfigurationalEntropy::generate_subgraphs(in
 	return {iso_label, label_total};
 }
 
-Graph ConfigurationalEntropy::generate_subgraph(Graph & graph, const Vector<int> & closestNeighbors) {
+void ConfigurationalEntropy::generate_subgraph(Graph & graph, const Vector<int> & closestNeighbors) {
 	for (const auto & node : closestNeighbors) {
 		if (_completeGraph.has_node(node)) {
 			if (!graph.has_node(node)) {
@@ -130,15 +131,12 @@ Graph ConfigurationalEntropy::generate_subgraph(Graph & graph, const Vector<int>
 			}
 		}
 	}
-
-	return graph;
 }
 
 void ConfigurationalEntropy::check_isomorfism(Vector<Graph> & graphs, Graph & graph, int & iso_label, Vector<int> & label_total, int size) {
-	UndirectedGraph undirected_graph = *graph.getGraph();
-
-	auto itIdx = __gnu_parallel::find_if(graphs.begin(), graphs.end(), [&undirected_graph](const Graph & g) {
-		return is_isomorphic(*g.getGraph(), undirected_graph);
+	auto itIdx = __gnu_parallel::find_if(graphs.begin(), graphs.end(), [&graph](const Graph & g) {
+		//return is_isomorphic(g, graph);
+		return is_isomorphic(*g.get_ugraph(), *graph.get_ugraph());
 	});
 
 	int idx = itIdx == graphs.end() ? -1 : itIdx - graphs.begin();

@@ -1,12 +1,13 @@
 CC = g++
 CFLAGS = -O3 -Wall -shared -std=c++14
-LIBS = -Isrc/cpp/libs/Aboria/src -Isrc/cpp/libs/Aboria/third-party -Isrc/cpp/libs/pybind11/include
+LIBS = -Isrc/cpp/libs/Aboria/src -Isrc/cpp/libs/Aboria/third-party -Isrc/cpp/libs/pybind11/include -Isrc/cpp/libs/nauty
+OBJECTS = src/cpp/libs/nauty/nauty.a
 PYTHON = -fPIC `python-config --includes`
 OPENMP = -fopenmp
-DEFINES = -DABORIA_LOG_LEVEL=1 #-DDEBUG
+DEFINES = -DABORIA_LOG_LEVEL=1 -LOG #-DDEBUG
 SOURCES = src/cpp/*.cpp
 OBJECT = boost_graph.so
 
 main:
-	$(CC) $(CFLAGS) $(LIBS) $(PYTHON) $(OPENMP) $(DEFINES) $(SOURCES) -o $(OBJECT)
+	$(CC) $(CFLAGS) $(LIBS) $(PYTHON) $(OPENMP) $(DEFINES) $(SOURCES) $(OBJECTS) -o $(OBJECT)
 	mv $(OBJECT) src/python

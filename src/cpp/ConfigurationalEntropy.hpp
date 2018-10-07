@@ -41,7 +41,7 @@ struct ConfigurationalEntropy {
 
 	const std::tuple<int, Vector<int>> generate_subgraphs(int m, int n);
 
-	Graph generate_subgraph(Graph & graph, const Vector<int> & closestNeighbors);
+	void generate_subgraph(Graph & graph, const Vector<int> & closestNeighbors);
 
 	inline void add_positions(const py::array_t<double> & positions) {
 		_searchTree.add_positions(positions);

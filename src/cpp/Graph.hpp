@@ -1,6 +1,7 @@
 #ifndef GRAPH_HPP
 #define GRAPH_HPP
 
+#include <nauty.h>
 #include <boost/graph/graph_traits.hpp>
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/isomorphism.hpp>
@@ -26,10 +27,10 @@ template <typename T>
 using Vector2D = Vector<Vector<T>>;
 
 struct Graph {
-	Graph() : isoLabel(0), qty(1), graph(std::make_shared<UndirectedGraph>()) {}
+	Graph() : isoLabel(0), qty(1), ugraph(std::make_unique<UndirectedGraph>()) {}
 
-	inline std::shared_ptr<UndirectedGraph> getGraph() const {
-		return graph;
+	inline UndirectedGraph * get_ugraph() const {
+		return ugraph.get();
 	}
 
 	inline int get_iso_label() const {
@@ -47,6 +48,12 @@ struct Graph {
 	inline int get_qty() const {
 		return qty;
 	}
+
+	inline graph * get_cannonical_label() const {
+		return cannonicalLabel.get();
+	}
+
+	void set_cannonical_label();
 
 	VertexDescriptor add_node(int node);
 
@@ -71,8 +78,9 @@ struct Graph {
 private:
 	int isoLabel;
 	int qty;
-	std::shared_ptr<UndirectedGraph> graph;
+	std::unique_ptr<UndirectedGraph> ugraph;
 	std::map<int, VertexDescriptor> mVertexDesc;
+	std::unique_ptr<graph[]> cannonicalLabel;
 };
 
 template <typename Graph1, typename Graph2>
@@ -88,5 +96,6 @@ struct vf2_callback {
 };
 
 bool is_isomorphic(const UndirectedGraph & uGraph1, const UndirectedGraph & uGraph2);
+// bool is_isomorphic(const Graph & graph1, const Graph & graph2);
 
 #endif /* GRAPH_HPP */
