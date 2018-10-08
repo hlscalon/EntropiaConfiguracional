@@ -1,4 +1,5 @@
 #include "ConfigurationalEntropy.hpp"
+#include "FindIsomorphicIndex.hpp"
 
 #include <parallel/algorithm>
 
@@ -94,7 +95,7 @@ const std::tuple<int, Vector<int>> ConfigurationalEntropy::generate_subgraphs(in
 	auto it = differentGraphs.begin();
 	for (int i = 0; it != differentGraphs.end(); ++it, ++i) {
 		Graph graphTmp(std::move(it->second));
-		this->check_isomorfism(graphs, graphTmp, iso_label, label_total, i);
+		this->check_isomorfism(graphs, graphTmp, iso_label, label_total);
 
 		#ifdef DEBUG
 		graphTmp.print_graph();
@@ -133,24 +134,30 @@ void ConfigurationalEntropy::generate_subgraph(Graph & graph, const Vector<int> 
 	}
 }
 
-void ConfigurationalEntropy::check_isomorfism(Vector<Graph> & graphs, Graph & graph, int & iso_label, Vector<int> & label_total, int size) {
-	auto itIdx = __gnu_parallel::find_if(graphs.begin(), graphs.end(), [&graph](const Graph & g) {
-		return is_isomorphic(g, graph);
-	});
+void ConfigurationalEntropy::check_isomorfism(Vector<Graph> & graphs, Graph & graph1, int & iso_label, Vector<int> & label_total) {
+	graph * clgraph = graph1.get_cannonical_label();
 
-	int idx = itIdx == graphs.end() ? -1 : itIdx - graphs.begin();
+	// EXPENSIVE
+	int size = graphs.size();
+	Vector<graph*> ngraphs(size);
+	for (int i = 0; i < size; ++i) {
+		ngraphs[i] = graphs[i].get_cannonical_label();
+	}
+
+	int idx = find_isomorphic_index(ngraphs, clgraph, graph1.get_total_nodes());
+
 	if (idx >= 0) {
 		int iso_label_idx = graphs[idx].get_iso_label();
 
 		if (iso_label_idx == 0) {
-			graph.set_iso_label(iso_label);
+			graph1.set_iso_label(iso_label);
 			graphs[idx].set_iso_label(iso_label);
 
-			label_total[iso_label] = graphs[idx].get_qty() + graph.get_qty();
+			label_total[iso_label] = graphs[idx].get_qty() + graph1.get_qty();
 			iso_label += 1; // label already used
 		} else if (iso_label_idx > 0) {
-			graph.set_iso_label(iso_label_idx);
-			label_total[iso_label_idx] += graph.get_qty();
+			graph1.set_iso_label(iso_label_idx);
+			label_total[iso_label_idx] += graph1.get_qty();
 		}
 	}
 }

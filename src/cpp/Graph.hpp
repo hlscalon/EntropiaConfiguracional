@@ -83,18 +83,4 @@ private:
 	std::unique_ptr<graph[]> cannonicalLabel;
 };
 
-template <typename Graph1, typename Graph2>
-struct vf2_callback {
-
-	vf2_callback(const Graph1 & graph1, const Graph2 & graph2) {}
-
-	template <typename CorrespondenceMap1To2, typename CorrespondenceMap2To1>
-	bool operator()(CorrespondenceMap1To2, CorrespondenceMap2To1) const {
-		// return on the first mapping found
-		return false;
-	}
-};
-
-bool is_isomorphic(const Graph & graph1, const Graph & graph2);
-
 #endif /* GRAPH_HPP */
