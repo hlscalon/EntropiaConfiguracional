@@ -2,8 +2,7 @@
 #define FIND_ISOMORPHIC_INDEX_HPP
 
 #include "Graph.hpp"
-#include "CudaInclude.hpp"
 
-int find_isomorphic_index(const Vector<graph*> & ngraphs, const graph * clgraph, int totalNodes);
+int find_isomorphic_index(const Vector<Graph> & graphs, const graph * clgraph, int totalNodes);
 
 #endif // FIND_ISOMORPHIC_INDEX_HPP

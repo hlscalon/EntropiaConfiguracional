@@ -136,15 +136,7 @@ void ConfigurationalEntropy::generate_subgraph(Graph & graph, const Vector<int> 
 
 void ConfigurationalEntropy::check_isomorfism(Vector<Graph> & graphs, Graph & graph1, int & iso_label, Vector<int> & label_total) {
 	graph * clgraph = graph1.get_cannonical_label();
-
-	// EXPENSIVE
-	int size = graphs.size();
-	Vector<graph*> ngraphs(size);
-	for (int i = 0; i < size; ++i) {
-		ngraphs[i] = graphs[i].get_cannonical_label();
-	}
-
-	int idx = find_isomorphic_index(ngraphs, clgraph, graph1.get_total_nodes());
+	int idx = find_isomorphic_index(graphs, clgraph, graph1.get_total_nodes());
 
 	if (idx >= 0) {
 		int iso_label_idx = graphs[idx].get_iso_label();
