@@ -14,30 +14,27 @@
 
 namespace py = pybind11;
 
-using Point = std::tuple<float, float, float>;
-
 template <typename T>
 using Vector = std::vector<T>;
 
 template <typename T>
 using Vector2D = Vector<Vector<T>>;
 
+template <typename T>
+using PyArray = pybind11::detail::unchecked_reference<T, 1>;
+
 struct ConfigurationalEntropy {
-	ConfigurationalEntropy(const Graph & completeGraph, int nDimensions, int nParticles, bool pbcX, bool pbcY, bool pbcZ, const py::array_t<double> & dMin, const py::array_t<double> & dMax) :
+	ConfigurationalEntropy(const Graph & completeGraph, int nDimensions, int nParticles, bool pbcX, bool pbcY, bool pbcZ, int maxM) :
 		_completeGraph(completeGraph), _searchTree(nDimensions, nParticles, pbcX, pbcY, pbcZ) {
-			auto _dMin = dMin.unchecked<1>();
-			auto _dMax = dMax.unchecked<1>();
 			_generator = std::mt19937(_randDevice());
-			_distrX = std::uniform_real_distribution<float>(_dMin(0), _dMax(0));
-			_distrY = std::uniform_real_distribution<float>(_dMin(1), _dMax(1));
-			_distrZ = std::uniform_real_distribution<float>(_dMin(2), _dMax(2));
+			_distr = std::uniform_int_distribution<unsigned int>(0, maxM - 1);
 	}
 
 	void check_isomorfism(Vector<Graph> & graphs, Graph & graph1, int & iso_label, Vector<int> & label_total);
 
 	py::tuple calculate(int m, int n, double c);
 
-	const Point generate_random_point(int precision);
+	const int generate_random_point();
 
 	const std::tuple<int, Vector<int>> generate_subgraphs(int m, int n);
 
@@ -47,12 +44,10 @@ struct ConfigurationalEntropy {
 		_searchTree.add_positions(positions);
 	}
 
-	inline void init_search(double xMin, double xMax, double yMin, double yMax, double zMin, double zMax) {
-		_searchTree.init_search(xMin, xMax, yMin, yMax, zMin, zMax);
-	}
+	void init_search(double xMin, double xMax, double yMin, double yMax, double zMin, double zMax, int maxN, int maxM, const py::array_t<double> & dMin, const py::array_t<double> & dMax);
 
-	inline Vector<int> search_nearest_neighbors(float x, float y, float z, unsigned int n) {
-		return _searchTree.search_nearest_neighbors(x, y, z, n, _completeGraph);
+	inline Vector<int> get_nearest_neighbors(int randomPosition, int n) {
+		return _searchTree.get_nearest_neighbors(randomPosition, n);
 	}
 
 	double calc_shannon_entropy(double Hn, double fi, double m);
@@ -61,9 +56,7 @@ private:
 	SearchTree _searchTree;
 	std::random_device _randDevice;
 	std::mt19937 _generator;
-	std::uniform_real_distribution<float> _distrX;
-	std::uniform_real_distribution<float> _distrY;
-	std::uniform_real_distribution<float> _distrZ;
+	std::uniform_int_distribution<unsigned int> _distr;
 };
 
 #endif /* GRAPHS_HPP */

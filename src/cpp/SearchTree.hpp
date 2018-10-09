@@ -20,16 +20,25 @@ using Particle_position = Particle_t::position;
 template <typename T>
 using Vector = std::vector<T>;
 
+template <typename T>
+using Vector2D = Vector<Vector<T>>;
+
+template <typename T>
+using PyArray = pybind11::detail::unchecked_reference<T, 1>;
+
 struct SearchTree {
 	SearchTree(int nDimensions, int nParticles, bool pbcX, bool pbcY, bool pbcZ) :
 		_nDimensions(nDimensions), _nParticles(nParticles), _pbcX(pbcX), _pbcY(pbcY), _pbcZ(pbcZ), _largestRadius(0), _particles(nParticles) {}
 
 	void add_positions(const py::array_t<double> & positions);
-	void init_search(double xMin, double xMax, double yMin, double yMax, double zMin, double zMax);
-	Vector<int> search_nearest_neighbors(float x, float y, float z, unsigned int n, const Graph & completeGraph);
-	const Vector<int> get_neighbors_connected(const Graph & g, const Vector<int> & vertices, unsigned int n);
-	std::pair<bool, Vector<int>> generate_all_combinations(const Graph & g, const Vector<int> & vertices, int size, unsigned int n);
-	bool check_is_connected(const Graph & g, const Vector<int> & verticesNewGraph);
+
+	void init_search(double xMin, double xMax, double yMin, double yMax, double zMin, double zMax, const PyArray<double> & dMin, const PyArray<double> & dMax);
+
+	void generate_random_positions(int maxN, int maxM);
+
+	Vector<int> get_nearest_neighbors(int randomPosition, int n);
+
+	Vector<int> search_nearest_neighbors(float x, float y, float z, unsigned int n);
 
 private:
 	int _nDimensions;
@@ -38,7 +47,13 @@ private:
 	bool _pbcY;
 	bool _pbcZ;
 	int _largestRadius;
+	std::random_device _randDevice;
+	std::mt19937 _generator;
+	std::uniform_real_distribution<float> _distrX;
+	std::uniform_real_distribution<float> _distrY;
+	std::uniform_real_distribution<float> _distrZ;
 	Particle_t _particles;
+	Vector2D<int> _randomPositions;
 };
 
 #endif /* SEARCH_TREE_HPP */

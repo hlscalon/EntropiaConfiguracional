@@ -3,19 +3,6 @@
 
 #include <parallel/algorithm>
 
-const Point ConfigurationalEntropy::generate_random_point(int precision) {
-	auto round = [](float number, int precision) {
-		int decimals = std::pow(10, precision);
-		return (std::round(number * decimals)) / decimals;
-	};
-
-	Point rp;
-	std::get<0>(rp) = round(_distrX(_generator), precision);
-	std::get<1>(rp) = round(_distrY(_generator), precision);
-	std::get<2>(rp) = round(_distrZ(_generator), precision);
-	return rp;
-}
-
 py::tuple ConfigurationalEntropy::calculate(int m, int n, double c) {
 	std::tuple<int, Vector<int>> ret = this->generate_subgraphs(m, n);
 	int iso_label = std::get<0>(ret);
@@ -53,9 +40,20 @@ py::tuple ConfigurationalEntropy::calculate(int m, int n, double c) {
 	return py::make_tuple(Hc_n, valid);
 }
 
+const int ConfigurationalEntropy::generate_random_point() {
+	return _distr(_generator);
+}
+
+void ConfigurationalEntropy::init_search(double xMin, double xMax, double yMin, double yMax, double zMin, double zMax, int maxN, int maxM, const py::array_t<double> & dMin, const py::array_t<double> & dMax) {
+	PyArray<double> _dMin = dMin.unchecked<1>();
+	PyArray<double> _dMax = dMax.unchecked<1>();
+
+	_searchTree.init_search(xMin, xMax, yMin, yMax, zMin, zMax, _dMin, _dMax);
+	_searchTree.generate_random_positions(maxN, maxM);
+}
+
 const std::tuple<int, Vector<int>> ConfigurationalEntropy::generate_subgraphs(int m, int n) {
 	std::map<Vector<int>, Graph> differentGraphs;
-	std::map<Point, Vector<int>> nearestNeighborsFromPoint;
 
 	// - gerar todas as m posições maximas da maior iteração, guardar em um vetor, uma posição para cada neighbors maximo (2, 5, 9, ...)
 	//	- gerar posicao aleatoria no vetor 0 <-> vetor.size()
@@ -69,19 +67,9 @@ const std::tuple<int, Vector<int>> ConfigurationalEntropy::generate_subgraphs(in
 	//	- GraphIsomorphism ? tem iso_label, cannonical_label, qty
 
 	for (int i = 0; i < m; ++i) {
-		Point rp = this->generate_random_point(1);
-
-		Vector<int> nearestNeighbors;
-
-		auto itNN = nearestNeighborsFromPoint.find(rp);
-		if (itNN != nearestNeighborsFromPoint.end()) {
-			nearestNeighbors = itNN->second;
-		} else {
-			float x = std::get<0>(rp); float y = std::get<1>(rp); float z = std::get<2>(rp);
-			nearestNeighbors = this->search_nearest_neighbors(x, y, z, n);
-			std::sort(nearestNeighbors.begin(), nearestNeighbors.end());
-			nearestNeighborsFromPoint[rp] = nearestNeighbors;
-		}
+		const int rp = this->generate_random_point();
+		Vector<int> nearestNeighbors(this->get_nearest_neighbors(rp, n));
+		std::sort(nearestNeighbors.begin(), nearestNeighbors.end());
 
 		// testa antes de colocar
 		if (differentGraphs.find(nearestNeighbors) == differentGraphs.end()) {

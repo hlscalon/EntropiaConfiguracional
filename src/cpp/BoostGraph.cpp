@@ -27,7 +27,7 @@ PYBIND11_MODULE(boost_graph, m) {
 	;
 
 	py::class_<ConfigurationalEntropy>(m, "ConfigurationalEntropy")
-		.def(py::init<const Graph &, int, int, bool, bool, bool, const py::array_t<double> &, const py::array_t<double> &>())
+		.def(py::init<const Graph &, int, int, bool, bool, bool, int>())
 		.def("add_positions", &ConfigurationalEntropy::add_positions)
 		.def("init_search", &ConfigurationalEntropy::init_search)
 		.def("calculate", &ConfigurationalEntropy::calculate)

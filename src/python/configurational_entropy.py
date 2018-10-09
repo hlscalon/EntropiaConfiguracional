@@ -138,6 +138,8 @@ def calculateConfigurationalEntropy(n1, n2, xy_polyfit, hcn_values):
 
 	print("Estimated configurational entropy = %f" % (m))
 
+def getNumberRandomPositions(n, total_nodes):
+	return 3 * n * n * total_nodes
 
 def startMeasurement(filepath, covalent_radii_cut_off, c, n1, n2, calculate):
 	if n1 > n2:
@@ -150,6 +152,8 @@ def startMeasurement(filepath, covalent_radii_cut_off, c, n1, n2, calculate):
 
 	print("Slab %s read with success" % filepath)
 
+	print("Creating graph...")
+
 	# G = generateGraphFromSlab(slab, covalent_radii_cut_off)
 	G = generateGraphFromSlabVinkFile(slab, covalent_radii_cut_off)
 
@@ -160,37 +164,39 @@ def startMeasurement(filepath, covalent_radii_cut_off, c, n1, n2, calculate):
 
 	print("Graph created with success. Nodes found: %d" % total_nodes)
 
-	measurement = Measurement()
-	measurement.fromFile(filepath, covalent_radii_cut_off, c, n1, n2)
-	measurement.createFile()
-
-	hcn_values = []
-	xy_polyfit = []
-
-	(pbcX, pbcY, pbcZ) = slab.get_pbc()
-	(dmin, dmax) = getMaxMinSlabArray(slab)
-	configurationalEntropy = bg.ConfigurationalEntropy(G, 3, len(slab), pbcX, pbcY, pbcZ, dmin, dmax)
-	configurationalEntropy.add_positions(slab.get_positions(wrap=True))
 	cell = slab.get_cell()
 
+	# somente para celulas ortogonais
 	if not is_orthorhombic(cell):
 		print("Unit cell is not orthorhombic")
 		return
 
-	# somente para celulas ortogonais
-	configurationalEntropy.init_search(0, cell[0][0], 0, cell[1][1], 0, cell[2][2])
+	measurement = Measurement()
+	measurement.fromFile(filepath, covalent_radii_cut_off, c, n1, n2)
+	measurement.createFile()
 
+	(pbcX, pbcY, pbcZ) = slab.get_pbc()
+	(dmin, dmax) = getMaxMinSlabArray(slab)
+	maxM = getNumberRandomPositions(n2 - 1, total_nodes)
+
+	configurationalEntropy = bg.ConfigurationalEntropy(G, 3, len(slab), pbcX, pbcY, pbcZ, maxM)
+	configurationalEntropy.add_positions(slab.get_positions(wrap=True))
+
+	print("Generating random positions...")
+
+	configurationalEntropy.init_search(0, cell[0][0], 0, cell[1][1], 0, cell[2][2], n2 -1, maxM, dmin, dmax)
+
+	print("Random positions generated.")
+
+	hcn_values = []
+	xy_polyfit = []
 	for n in range(n1, n2):
 		measurement.start()
 
-		m = 3 * n * n * total_nodes
-		# m = (n/2) * (n/2) * total_nodes
+		m = getNumberRandomPositions(n, total_nodes)
 		(hcn, valid) = run(configurationalEntropy, m, n, c)
 
-		# valid = True # ALWAYS TRUE
-
 		measurement.writeResult(n, m, hcn, valid)
-
 		measurement.end()
 
 		hcn_values.append((n, hcn))
