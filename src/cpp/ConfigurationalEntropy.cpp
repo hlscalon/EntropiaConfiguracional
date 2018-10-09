@@ -57,6 +57,17 @@ const std::tuple<int, Vector<int>> ConfigurationalEntropy::generate_subgraphs(in
 	std::map<Vector<int>, Graph> differentGraphs;
 	std::map<Point, Vector<int>> nearestNeighborsFromPoint;
 
+	// - gerar todas as m posições maximas da maior iteração, guardar em um vetor, uma posição para cada neighbors maximo (2, 5, 9, ...)
+	//	- gerar posicao aleatoria no vetor 0 <-> vetor.size()
+
+	// std::map<Vector<int>, std::pair<std::unique_ptr<graph>, int qty>
+	// - gera grafo
+	//	- verifica se é conectado
+	//		- gera cannonnical label
+	//			- move para o map
+	// 	- vetor de std::pair<std::unique_ptr<graph>, int qty>
+	//	- GraphIsomorphism ? tem iso_label, cannonical_label, qty
+
 	for (int i = 0; i < m; ++i) {
 		Point rp = this->generate_random_point(1);
 

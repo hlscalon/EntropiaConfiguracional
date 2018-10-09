@@ -150,8 +150,8 @@ def startMeasurement(filepath, covalent_radii_cut_off, c, n1, n2, calculate):
 
 	print("Slab %s read with success" % filepath)
 
-	G = generateGraphFromSlab(slab, covalent_radii_cut_off)
-	# G = generateGraphFromSlabVinkFile(slab, covalent_radii_cut_off)
+	# G = generateGraphFromSlab(slab, covalent_radii_cut_off)
+	G = generateGraphFromSlabVinkFile(slab, covalent_radii_cut_off)
 
 	total_nodes = G.get_total_nodes()
 	if total_nodes == 0 or G.get_total_edges() == 0:
