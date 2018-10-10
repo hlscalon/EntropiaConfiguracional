@@ -3,7 +3,7 @@
 #include <iostream>
 #include <boost/graph/connected_components.hpp>
 
-void Graph::set_cannonical_label() {
+std::unique_ptr<graph[]> Graph::get_cannonical_label() const {
 	static DEFAULTOPTIONS_GRAPH(options);
 	options.getcanon = TRUE;
 
@@ -26,11 +26,12 @@ void Graph::set_cannonical_label() {
 	std::unique_ptr<int[]> lab(new int[n]);
 	std::unique_ptr<int[]> ptn(new int[n]);
 	std::unique_ptr<int[]> orbits(new int[n]);
-
-	this->cannonicalLabel = std::make_unique<graph[]>(n * m);
+	std::unique_ptr<graph[]> cannonicalLabel(new graph[n * m]);
 
 	statsblk stats;
-	densenauty(ngraph.get(), lab.get(), ptn.get(), orbits.get(), &options, &stats, m, n, this->cannonicalLabel.get());
+	densenauty(ngraph.get(), lab.get(), ptn.get(), orbits.get(), &options, &stats, m, n, cannonicalLabel.get());
+
+	return cannonicalLabel;
 }
 
 VertexDescriptor Graph::add_node(int node) {

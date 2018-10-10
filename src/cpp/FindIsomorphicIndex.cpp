@@ -7,10 +7,10 @@ bool is_isomorphic(const graph * clgraph1, const graph * clgraph2, int totalNode
 	return memcmp(clgraph1, clgraph2, m * sizeof(graph) * totalNodes) == 0;
 }
 
-int find_isomorphic_index(const Vector<Graph> & graphs, const graph * clgraph, int totalNodes) {
-	auto itIdx = __gnu_parallel::find_if(graphs.begin(), graphs.end(), [&](const Graph & g) {
+int find_isomorphic_index(const Vector<GraphIsomorphism> & graphsIso, const graph * clgraph, int totalNodes) {
+	auto itIdx = __gnu_parallel::find_if(graphsIso.begin(), graphsIso.end(), [&](const GraphIsomorphism & g) {
 		return is_isomorphic(g.get_cannonical_label(), clgraph, totalNodes);
 	});
 
-	return itIdx == graphs.end() ? -1 : itIdx - graphs.begin();
+	return itIdx == graphsIso.end() ? -1 : itIdx - graphsIso.begin();
 }

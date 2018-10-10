@@ -10,6 +10,7 @@
 #include <tuple>
 
 #include "Graph.hpp"
+#include "GraphIsomorphism.hpp"
 #include "SearchTree.hpp"
 
 namespace py = pybind11;
@@ -30,7 +31,7 @@ struct ConfigurationalEntropy {
 			_distr = std::uniform_int_distribution<unsigned int>(0, maxM - 1);
 	}
 
-	void check_isomorfism(Vector<Graph> & graphs, Graph & graph1, int & iso_label, Vector<int> & label_total);
+	void check_isomorfism(Vector<GraphIsomorphism> & graphsIso, GraphIsomorphism & graphIsoTmp, int & isoLabel, Vector<int> & labelTotal, int totalNodes);
 
 	py::tuple calculate(int m, int n, double c);
 

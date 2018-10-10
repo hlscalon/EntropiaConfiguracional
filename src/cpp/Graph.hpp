@@ -1,11 +1,9 @@
 #ifndef GRAPH_HPP
 #define GRAPH_HPP
 
-#include <nauty.h>
 #include <boost/graph/graph_traits.hpp>
 #include <boost/graph/adjacency_list.hpp>
-#include <boost/graph/isomorphism.hpp>
-#include <boost/graph/vf2_sub_graph_iso.hpp>
+#include <nauty.h>
 
 #include <utility>
 #include <memory>
@@ -26,34 +24,15 @@ using Vector = std::vector<T>;
 template <typename T>
 using Vector2D = Vector<Vector<T>>;
 
-struct Graph {
-	Graph() : isoLabel(0), qty(1), ugraph(std::make_unique<UndirectedGraph>()) {}
+class Graph {
+public:
+	Graph() : ugraph(std::make_unique<UndirectedGraph>()) {}
 
 	inline UndirectedGraph * get_ugraph() const {
 		return ugraph.get();
 	}
 
-	inline int get_iso_label() const {
-		return isoLabel;
-	}
-
-	inline void set_iso_label(int _isoLabel) {
-		isoLabel = _isoLabel;
-	}
-
-	inline void add_qty(int _qty) {
-		qty += _qty;
-	}
-
-	inline int get_qty() const {
-		return qty;
-	}
-
-	inline graph * get_cannonical_label() const {
-		return cannonicalLabel.get();
-	}
-
-	void set_cannonical_label();
+	std::unique_ptr<graph[]> get_cannonical_label() const;
 
 	VertexDescriptor add_node(int node);
 
@@ -76,11 +55,8 @@ struct Graph {
 	void print_graph() const;
 
 private:
-	int isoLabel;
-	int qty;
 	std::unique_ptr<UndirectedGraph> ugraph;
 	std::map<int, VertexDescriptor> mVertexDesc;
-	std::unique_ptr<graph[]> cannonicalLabel;
 };
 
 #endif /* GRAPH_HPP */
