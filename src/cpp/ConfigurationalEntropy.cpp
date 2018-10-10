@@ -3,6 +3,7 @@
 #include "GraphIsomorphism.hpp"
 
 #include <parallel/algorithm>
+#include <omp.h>
 
 py::tuple ConfigurationalEntropy::calculate(int m, int n, double c) {
 	std::tuple<int, Vector<int>> ret = this->generate_subgraphs(m, n);
@@ -56,24 +57,38 @@ void ConfigurationalEntropy::init_search(double xMin, double xMax, double yMin, 
 const std::tuple<int, Vector<int>> ConfigurationalEntropy::generate_subgraphs(int m, int n) {
 	std::map<Vector<int>, GraphIsomorphism> cannonicalLabels;
 
+	omp_lock_t canLabLock;
+	omp_init_lock(&canLabLock);
+
+	#pragma omp parallel for
 	for (int i = 0; i < m; ++i) {
 		const int rp = this->generate_random_point();
 		Vector<int> nearestNeighbors(this->get_nearest_neighbors(rp, n));
 		std::sort(nearestNeighbors.begin(), nearestNeighbors.end());
 
 		// testa antes de colocar
-		if (cannonicalLabels.find(nearestNeighbors) == cannonicalLabels.end()) {
+		omp_set_lock(&canLabLock);
+		bool found = cannonicalLabels.find(nearestNeighbors) == cannonicalLabels.end();
+		omp_unset_lock(&canLabLock);
+
+		if (found) {
 			Graph graph;
 			this->generate_subgraph(graph, nearestNeighbors);
 			if (!graph.is_connected()) {
 				i--; // continua na mesma iteracao, gera outro ponto aleatorio
 			} else {
+				omp_set_lock(&canLabLock);
 				cannonicalLabels[nearestNeighbors] = GraphIsomorphism(graph.get_cannonical_label());
+				omp_unset_lock(&canLabLock);
 			}
 		} else {
+			omp_set_lock(&canLabLock);
 			cannonicalLabels[nearestNeighbors].add_qty(1);
+			omp_unset_lock(&canLabLock);
 		}
 	}
+
+	omp_destroy_lock(&canLabLock);
 
 	int isoLabel = 1;
 	Vector<int> labelTotal(m); // inicia todos no zero (maximo)
