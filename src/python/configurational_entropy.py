@@ -111,20 +111,21 @@ def generateGraphFromSlabVinkFile(slab, covalent_radii_cut_off):
 def calculateHcn(H_n_values, c):
 	xy_polyfit = []
 	Hc_n_values = []
-	for n, H_n, H1n in H_n_values:
+	for n, H_n, H1n, consider in H_n_values:
 		H1nDiv = 0.0
 		if H_n > 0:
 			H1nDiv = H1n / H_n
 
-		H_n_extrapolated = H_n + (c * H1nDiv);
-		g_n = 2 * log(n); # (spatial_dimensions - 1)
-		Hc_n = H_n_extrapolated - g_n;
+		H_n_extrapolated = H_n + (c * H1nDiv)
+		g_n = 2 * log(n) # (spatial_dimensions - 1)
+		Hc_n = H_n_extrapolated - g_n
 
 		Hc_n_values.append((n, Hc_n))
-		if H1n > (H_n_extrapolated / 100):
-			print("n: %d. H1(n) exceeds 1%% of H(n). Not a valid measurement." % n)
-		else:
-			xy_polyfit.append((n, Hc_n))
+		if consider == 'Y':
+			if H1n > (H_n_extrapolated / 100):
+				print("n: %d. H1(n) exceeds 1%% of H(n). Not a valid measurement." % n)
+			else:
+				xy_polyfit.append((n, Hc_n))
 
 	return (Hc_n_values, xy_polyfit)
 
@@ -163,8 +164,8 @@ def startMeasurement(filepath, covalent_radii_cut_off, c, n1, n2, calculate):
 
 	print("Creating graph...")
 
-	G = generateGraphFromSlab(slab, covalent_radii_cut_off)
-	# G = generateGraphFromSlabVinkFile(slab, covalent_radii_cut_off)
+	# G = generateGraphFromSlab(slab, covalent_radii_cut_off)
+	G = generateGraphFromSlabVinkFile(slab, covalent_radii_cut_off)
 
 	total_nodes = G.get_total_nodes()
 	if total_nodes == 0 or G.get_total_edges() == 0:
@@ -207,7 +208,7 @@ def startMeasurement(filepath, covalent_radii_cut_off, c, n1, n2, calculate):
 		measurement.writeResult(n, m, H_n, H1n)
 		measurement.end()
 
-		H_n_values.append((n, H_n, H1n))
+		H_n_values.append((n, H_n, H1n, "Y"))
 
 	if calculate == "Y":
 		calculateConfigurationalEntropy(n1, n2, H_n_values, c)
