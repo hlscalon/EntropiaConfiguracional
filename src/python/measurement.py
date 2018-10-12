@@ -28,10 +28,10 @@ class Measurement():
 			os.makedirs(dirname)
 
 		with open(self.ce_file, "w+") as file:
-			file.write("filepath: " + self.filepath + "; covalent: " + str(self.covalent_radii_cut_off) + "; c: " + str(self.c) + "; n1: " + str(self.n1) + "; n2: " + str(self.n2) + "\r\n")
+			file.write("filepath: " + self.filepath + "; covalent: " + str(self.covalent_radii_cut_off) + "; c: " + str(self.c) + "; n1: " + str(self.n1) + "; n2: " + str(self.n2) + ";\r\n")
 
-	def writeResult(self, n, m, hcn, valid):
-		line = "n: " + str(n) + "; m: " + str(m) + "; hcn: " + str(hcn) + "; valid: " + str(valid) + "\r\n"
+	def writeResult(self, n, m, H_n, H1n):
+		line = "n: " + str(n) + "; m: " + str(m) + "; H_n: " + str(H_n) + "; H1n: " + str(H1n) + ";\r\n"
 
 		with open(self.ce_file, "a") as file:
 			file.write(line)
@@ -49,27 +49,28 @@ class Measurement():
 		f = open(self.filepath, "r")
 
 		firstLine = f.readline()
-		n1idx = firstLine.find("n1: ")
+		cidx = firstLine.find("; c: ")
+		n1idx = firstLine.find("; n1: ")
 		n2idx = firstLine.find("; n2: ")
+		fimidx = firstLine.find(";\r\n")
 
-		n1 = int(firstLine[n1idx + 4 : n2idx])
-		n2 = int(firstLine[n2idx + 6 : ])
+		c = float(firstLine[cidx + 6 : n1idx])
+		n1 = int(firstLine[n1idx + 6 : n2idx])
+		n2 = int(firstLine[n2idx + 6 : fimidx])
 
-		xy_polyfit = []
-		hcn_values = []
+		H_n_values = []
 		for line in f:
 			nidx = line.find("n: ")
 			midx = line.find("; m: ")
 			n = int(line[nidx + 3 : midx])
-			hcnidx = line.find("hcn: ")
-			valididx = line.find("; valid: ")
-			hcn = float(line[hcnidx + 5 : valididx])
-			valid = line[valididx + 9 : ].strip() == 'True'
+			H_nidx = line.find("H_n: ")
+			H1nidx = line.find("; H1n: ")
+			fimidx = line.find(";\r\n")
+			H_n = float(line[H_nidx + 5 : H1nidx])
+			H1n = float(line[H1nidx + 7 : fimidx])
 
-			hcn_values.append((n, hcn))
-			if valid:
-				xy_polyfit.append((n, hcn))
+			H_n_values.append((n, H_n, H1n))
 
 		f.close()
 
-		return n1, n2, xy_polyfit, hcn_values
+		return n1, n2, H_n_values, c

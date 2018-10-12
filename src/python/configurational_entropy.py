@@ -16,11 +16,8 @@ from numpy import asarray
 from numpy.polynomial.polynomial import polyfit
 
 def run(configurationEntropy, m, n, c):
-	Hc_n, valid = configurationEntropy.calculate(m, n, c)
-	if not valid:
-		print("n: %d. H1(n) exceeds 1%% of H(n). Not a valid measurement." % n)
-
-	return Hc_n, valid
+	H_n, H1n = configurationEntropy.calculate(m, n, c)
+	return H_n, H1n
 
 def getMaxMinSlabArray(slab):
 	(dmin, dmax) = (
@@ -91,12 +88,10 @@ def generateGraphFromSlabVinkFile(slab, covalent_radii_cut_off):
 						mapping[atom2].append(atom1)
 
 	graph = bg.Graph()
-	graphNx = nx.Graph()
 	for atom1 in slab:
 		if atom1.symbol == 'Si':
 			if not graph.has_node(atom1.index):
 				graph.add_node(atom1.index) # add nodes not bonded
-				graphNx.add_node(atom1.index) # add nodes not bonded
 
 			try:
 				for n1_o in mapping[atom1.index]:
@@ -105,38 +100,52 @@ def generateGraphFromSlabVinkFile(slab, covalent_radii_cut_off):
 							if atomic_numbers[n2_si] == 14: # Si
 								if atom1.index != n2_si:
 									graph.add_edge(atom1.index, n2_si)
-									graphNx.add_edge(atom1.index, n2_si)
 			except KeyError:
 				pass
-
-	# printar a estrutura
-	# view(slab)
 
 	# remove O atomos
 	del slab[[atom.index for atom in slab if atom.symbol == 'O']]
 
-	# printar grafo gerado pelo nx
-	# nx.draw(graphNx, with_labels=True, font_weigth='bold')
-	# plt.show()
-
 	return graph
 
-def calculateConfigurationalEntropy(n1, n2, xy_polyfit, hcn_values):
+def calculateHcn(H_n_values, c):
+	xy_polyfit = []
+	Hc_n_values = []
+	for n, H_n, H1n in H_n_values:
+		H1nDiv = 0.0
+		if H_n > 0:
+			H1nDiv = H1n / H_n
+
+		H_n_extrapolated = H_n + (c * H1nDiv);
+		g_n = 2 * log(n); # (spatial_dimensions - 1)
+		Hc_n = H_n_extrapolated - g_n;
+
+		Hc_n_values.append((n, Hc_n))
+		if H1n > (H_n_extrapolated / 100):
+			print("n: %d. H1(n) exceeds 1%% of H(n). Not a valid measurement." % n)
+		else:
+			xy_polyfit.append((n, Hc_n))
+
+	return (Hc_n_values, xy_polyfit)
+
+def calculateConfigurationalEntropy(n1, n2, H_n_values, c):
+	Hc_n_values, xy_polyfit = calculateHcn(H_n_values, c)
+
 	(x_p, y_p) = zip(*xy_polyfit)
 	x_p = asarray(x_p)
 	y_p = asarray(y_p)
 
 	# straight line fit
-	b, m = polyfit(x_p, y_p, 1) # m equals the slope of the line
-	plt.plot(x_p, b + m * x_p, '-')
+	b, configurational_entropy = polyfit(x_p, y_p, 1) # configurational_entropy equals the slope of the line
+	plt.plot(x_p, b + configurational_entropy * x_p, '-')
 
-	x, y = zip(*hcn_values)
+	x, y = zip(*Hc_n_values)
 	plt.scatter(x, y)
 
 	plt.axis([n1, n2, -5, 10])
 	plt.show()
 
-	print("Estimated configurational entropy = %f" % (m))
+	print("Estimated configurational entropy = %f" % (configurational_entropy))
 
 def getNumberRandomPositions(n, total_nodes):
 	return 3 * n * n * total_nodes
@@ -154,8 +163,8 @@ def startMeasurement(filepath, covalent_radii_cut_off, c, n1, n2, calculate):
 
 	print("Creating graph...")
 
-	# G = generateGraphFromSlab(slab, covalent_radii_cut_off)
-	G = generateGraphFromSlabVinkFile(slab, covalent_radii_cut_off)
+	G = generateGraphFromSlab(slab, covalent_radii_cut_off)
+	# G = generateGraphFromSlabVinkFile(slab, covalent_radii_cut_off)
 
 	total_nodes = G.get_total_nodes()
 	if total_nodes == 0 or G.get_total_edges() == 0:
@@ -188,22 +197,19 @@ def startMeasurement(filepath, covalent_radii_cut_off, c, n1, n2, calculate):
 
 	print("Random positions generated.")
 
-	hcn_values = []
-	xy_polyfit = []
+	H_n_values = []
 	for n in range(n1, n2):
 		measurement.start()
 
 		m = getNumberRandomPositions(n, total_nodes)
-		(hcn, valid) = run(configurationalEntropy, m, n, c)
+		H_n, H1n = run(configurationalEntropy, m, n, c)
 
-		measurement.writeResult(n, m, hcn, valid)
+		measurement.writeResult(n, m, H_n, H1n)
 		measurement.end()
 
-		hcn_values.append((n, hcn))
-		if valid:
-			xy_polyfit.append((n, hcn))
+		H_n_values.append((n, H_n, H1n))
 
 	if calculate == "Y":
-		calculateConfigurationalEntropy(n1, n2, xy_polyfit, hcn_values)
+		calculateConfigurationalEntropy(n1, n2, H_n_values, c)
 
 	print("Program ended correctly")

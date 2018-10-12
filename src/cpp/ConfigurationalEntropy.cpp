@@ -21,25 +21,7 @@ py::tuple ConfigurationalEntropy::calculate(int m, int n, double c) {
 		}
 	}
 
-	double H1nDiv = 0.0;
-	if (H_n > 0) {
-		H1nDiv = (H1n / H_n);
-	}
-
-	double H_n_extrapolated = H_n + (c * H1nDiv);
-	double g_n = 2 * log(n); // (spatial_dimensions - 1)
-	double Hc_n = H_n_extrapolated - g_n;
-
-	bool valid = true;
-	if (H1n > (H_n_extrapolated / 100)) {
-		valid = false;
-	}
-
-	#ifdef LOG
-	std::cout << "H1nDiv = " << H1nDiv << "; H_n_extrapolated = " << H_n_extrapolated << "; Hc_n = " << Hc_n << "; H1n = " << H1n << "; valid = " << valid << "\n";
-	#endif
-
-	return py::make_tuple(Hc_n, valid);
+	return py::make_tuple(H_n, H1n);
 }
 
 const int ConfigurationalEntropy::generate_random_point() {
