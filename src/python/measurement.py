@@ -28,10 +28,10 @@ class Measurement():
 			os.makedirs(dirname)
 
 		with open(self.ce_file, "w+") as file:
-			file.write("filepath: " + self.filepath + "; covalent: " + str(self.covalent_radii_cut_off) + "; c: " + str(self.c) + "; n1: " + str(self.n1) + "; n2: " + str(self.n2) + ";\r\n")
+			file.write("filepath: " + self.filepath + "; covalent: " + str(self.covalent_radii_cut_off) + "; c: " + str(self.c) + "; n1: " + str(self.n1) + "; n2: " + str(self.n2) + ";\n")
 
 	def writeResult(self, n, m, H_n, H1n):
-		line = "n: " + str(n) + "; m: " + str(m) + "; H_n: " + str(H_n) + "; H1n: " + str(H1n) + "; consider: Y;\r\n"
+		line = "n: " + str(n) + "; m: " + str(m) + "; H_n: " + str(H_n) + "; H1n: " + str(H1n) + "; consider: Y;\n"
 
 		with open(self.ce_file, "a") as file:
 			file.write(line)
