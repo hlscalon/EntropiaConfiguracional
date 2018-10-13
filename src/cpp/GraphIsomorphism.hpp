@@ -11,7 +11,7 @@ using Vector = std::vector<T>;
 class GraphIsomorphism {
 public:
 	GraphIsomorphism() : _isoLabel(0), _qty(1) {}
-	GraphIsomorphism(std::unique_ptr<graph[]> cannonicalLabel) : _isoLabel(0), _qty(1), _cannonicalLabel(std::move(cannonicalLabel)) {}
+	GraphIsomorphism(std::unique_ptr<graph[]> canonicalLabel) : _isoLabel(0), _qty(1), _canonicalLabel(std::move(canonicalLabel)) {}
 
 	inline void set_iso_label(int isoLabel) {
 		_isoLabel = isoLabel;
@@ -29,13 +29,13 @@ public:
 		return _qty;
 	}
 
-	inline graph * get_cannonical_label() const {
-		return _cannonicalLabel.get();
+	inline graph * get_canonical_label() const {
+		return _canonicalLabel.get();
 	}
 private:
 	int _isoLabel;
 	int _qty;
-	std::unique_ptr<graph[]> _cannonicalLabel;
+	std::unique_ptr<graph[]> _canonicalLabel;
 };
 
 #endif /* GRAPH_ISOMORPHISM_HPP */

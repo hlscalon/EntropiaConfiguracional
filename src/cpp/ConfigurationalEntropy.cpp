@@ -37,7 +37,7 @@ void ConfigurationalEntropy::init_search(double xMin, double xMax, double yMin, 
 }
 
 const std::tuple<int, Vector<int>> ConfigurationalEntropy::generate_subgraphs(int m, int n) {
-	std::map<Vector<int>, GraphIsomorphism> cannonicalLabels;
+	std::map<Vector<int>, GraphIsomorphism> canonicalLabels;
 
 	omp_lock_t canLabLock;
 	omp_init_lock(&canLabLock);
@@ -50,7 +50,7 @@ const std::tuple<int, Vector<int>> ConfigurationalEntropy::generate_subgraphs(in
 
 		// testa antes de colocar
 		omp_set_lock(&canLabLock);
-		bool found = cannonicalLabels.find(nearestNeighbors) == cannonicalLabels.end();
+		bool found = canonicalLabels.find(nearestNeighbors) == canonicalLabels.end();
 		omp_unset_lock(&canLabLock);
 
 		if (found) {
@@ -60,12 +60,12 @@ const std::tuple<int, Vector<int>> ConfigurationalEntropy::generate_subgraphs(in
 				i--; // continua na mesma iteracao, gera outro ponto aleatorio
 			} else {
 				omp_set_lock(&canLabLock);
-				cannonicalLabels[nearestNeighbors] = GraphIsomorphism(graph.get_cannonical_label());
+				canonicalLabels[nearestNeighbors] = GraphIsomorphism(graph.get_canonical_label());
 				omp_unset_lock(&canLabLock);
 			}
 		} else {
 			omp_set_lock(&canLabLock);
-			cannonicalLabels[nearestNeighbors].add_qty(1);
+			canonicalLabels[nearestNeighbors].add_qty(1);
 			omp_unset_lock(&canLabLock);
 		}
 	}
@@ -75,10 +75,10 @@ const std::tuple<int, Vector<int>> ConfigurationalEntropy::generate_subgraphs(in
 	int isoLabel = 1;
 	Vector<int> labelTotal(m); // inicia todos no zero (maximo)
 	Vector<GraphIsomorphism> graphsIso;
-	graphsIso.reserve(cannonicalLabels.size());
+	graphsIso.reserve(canonicalLabels.size());
 
-	auto it = cannonicalLabels.begin();
-	for (int i = 0; it != cannonicalLabels.end(); ++it, ++i) {
+	auto it = canonicalLabels.begin();
+	for (int i = 0; it != canonicalLabels.end(); ++it, ++i) {
 		GraphIsomorphism graphIsoTmp(std::move(it->second));
 		this->check_isomorfism(graphsIso, graphIsoTmp, isoLabel, labelTotal, n);
 
@@ -120,7 +120,7 @@ void ConfigurationalEntropy::generate_subgraph(Graph & graph, const Vector<int> 
 }
 
 void ConfigurationalEntropy::check_isomorfism(Vector<GraphIsomorphism> & graphsIso, GraphIsomorphism & graphIsoTmp, int & isoLabel, Vector<int> & labelTotal, int totalNodes) {
-	graph * clgraph = graphIsoTmp.get_cannonical_label();
+	graph * clgraph = graphIsoTmp.get_canonical_label();
 	int idx = find_isomorphic_index(graphsIso, clgraph, totalNodes);
 
 	if (idx >= 0) {

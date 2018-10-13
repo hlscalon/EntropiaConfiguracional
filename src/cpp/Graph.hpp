@@ -32,7 +32,7 @@ public:
 		return ugraph.get();
 	}
 
-	std::unique_ptr<graph[]> get_cannonical_label() const;
+	std::unique_ptr<graph[]> get_canonical_label() const;
 
 	VertexDescriptor add_node(int node);
 
