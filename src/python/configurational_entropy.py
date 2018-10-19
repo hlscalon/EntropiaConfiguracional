@@ -143,15 +143,15 @@ def calculateConfigurationalEntropy(n1, n2, H_n_values, c):
 	x, y = zip(*Hc_n_values)
 	plt.scatter(x, y)
 
-	plt.axis([n1, n2, -5, 10])
+	plt.axis([n1, n2, -3, 10])
 	plt.show()
 
 	print("Estimated configurational entropy = %f" % (configurational_entropy))
 
 def getNumberRandomPositions(n, total_nodes):
-	return 3 * n * n * total_nodes
+	return 5 * n * n * total_nodes
 
-def startMeasurement(filepath, covalent_radii_cut_off, c, n1, n2, calculate):
+def startMeasurement(filepath, file_type, covalent_radii_cut_off, c, n1, n2, calculate):
 	if n1 > n2:
 		print("Final m cannot be smaller than initial m")
 		return
@@ -160,12 +160,16 @@ def startMeasurement(filepath, covalent_radii_cut_off, c, n1, n2, calculate):
 
 	slab = read(filepath)
 
-	print("Slab %s read with success" % filepath)
+	total_particles = len(slab)
+
+	print("Slab %s read with success. Total particles %d" % (filepath, total_particles))
 
 	print("Creating graph...")
 
-	# G = generateGraphFromSlab(slab, covalent_radii_cut_off)
-	G = generateGraphFromSlabVinkFile(slab, covalent_radii_cut_off)
+	if file_type == 'V':
+		G = generateGraphFromSlabVinkFile(slab, covalent_radii_cut_off)
+	else:
+		G = generateGraphFromSlab(slab, covalent_radii_cut_off)
 
 	total_nodes = G.get_total_nodes()
 	if total_nodes == 0 or G.get_total_edges() == 0:
@@ -187,7 +191,7 @@ def startMeasurement(filepath, covalent_radii_cut_off, c, n1, n2, calculate):
 
 	(pbcX, pbcY, pbcZ) = slab.get_pbc()
 	(dmin, dmax) = getMaxMinSlabArray(slab)
-	maxM = getNumberRandomPositions(n2 - 1, total_nodes)
+	maxM = getNumberRandomPositions(n2 - 1, total_particles)
 
 	configurationalEntropy = bg.ConfigurationalEntropy(G, 3, len(slab), pbcX, pbcY, pbcZ, maxM)
 	configurationalEntropy.add_positions(slab.get_positions(wrap=True))
@@ -202,7 +206,7 @@ def startMeasurement(filepath, covalent_radii_cut_off, c, n1, n2, calculate):
 	for n in range(n1, n2):
 		measurement.start()
 
-		m = getNumberRandomPositions(n, total_nodes)
+		m = getNumberRandomPositions(n, total_particles)
 		H_n, H1n = run(configurationalEntropy, m, n, c)
 
 		measurement.writeResult(n, m, H_n, H1n)

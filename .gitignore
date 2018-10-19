@@ -8,3 +8,4 @@ src/__init__.pyc
 src/cpp/libs/nauty
 *.pyc
 *.so
+comandos_init_main

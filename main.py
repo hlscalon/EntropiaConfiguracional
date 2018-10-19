@@ -3,24 +3,6 @@ import sys
 from src.python.configurational_entropy import startMeasurement
 from src.python.calculate_from_measurement import calculateFromMeasurement
 
-"""
-python2 main.py N arquivos_xyz/SILICA_SAMPLES/3k/3k-si-si.xyz 1.62 0 3 10 Y
-python2 main.py N arquivos_xyz/SILICA_SAMPLES/3k/3k-0-12-ase.xyz 1.12 0 3 15 Y
-python2 main.py N arquivos_xyz/SILICA_SAMPLES/3k/3k-0-17-ase.xyz 1.12 0 3 15 Y
-python2 main.py N arquivos_xyz/SILICA_SAMPLES/3k/3k-0-35-ase.xyz 1.12 0 3 15 Y
-time python2 main.py N arquivos_xyz/SILICA_SAMPLES/3k/3k-total-2-ase.xyz 1.12 5 3 15 Y
-python2 main.py N arquivos_xyz/fcc.xyz 1.12 0 3 10 Y
-python2 main.py N arquivos_xyz/fcc.xyz 1.12 0 3 15 Y
-time python2 main.py N arquivos_xyz/fcc.xyz 1.12 0 3 30 Y
-python2 main.py Y medicoes/med_fcc.xyz_3_9_2018_7_58_35.ce
-
-python2 -m yep -- main.py N arquivos_xyz/SILICA_SAMPLES/3k/3k-total-2-ase.xyz 1.12 0 3 15 Y
-
-python2 -m cProfile -s time main.py N arquivos_xyz/fcc.xyz 1.12 0 3 10 Y
-python2 -m yep --  main.py N arquivos_xyz/fcc.xyz 1.12 0 3 15 Y
-pprof --web /usr/bin/python2.7-debug main.py.prof
-"""
-
 def main():
 	if len(sys.argv) < 2:
 		print("1 parameter: from measurement (Y or N)\n")
@@ -38,24 +20,26 @@ def main():
 
 		calculateFromMeasurement(filepath)
 	else:
-		if len(sys.argv) < 7:
-			print("1 parameter: from measurement (Y or N)\n" +
-				  "2 parameter: xyz filepath\n" +
-				  "3 parameter: covalent_radii_cut_off\n" +
-				  "4 parameter: c\n" +
-				  "5 parameter: initial n\n" +
-				  "6 parameter: final n\n" +
-				  "7 parameter: calculate (Y or N)")
+		if len(sys.argv) < 8:
+			print("<$1>: from measurement (Y or N)\n" +
+				  "<$2>: xyz filepath\n" +
+				  "<$3>: file type (V = Vink file or N = Normal) \n" +
+				  "<$4>: covalent radii cut off\n" +
+				  "<$5>: c\n" +
+				  "<$6>: initial n\n" +
+				  "<$7>: final n\n" +
+				  "<$8>: calculate (Y or N)")
 			return
 
 		filepath = sys.argv[2]
-		covalent_radii_cut_off = float(sys.argv[3]) # 1.12
-		c = float(sys.argv[4])
-		n1 = int(sys.argv[5])
-		n2 = int(sys.argv[6])
-		calculate = sys.argv[7] # Y or N
+		file_type = sys.argv[3]
+		covalent_radii_cut_off = float(sys.argv[4]) # 1.12
+		c = float(sys.argv[5])
+		n1 = int(sys.argv[6])
+		n2 = int(sys.argv[7])
+		calculate = sys.argv[8] # Y or N
 
-		startMeasurement(filepath, covalent_radii_cut_off, c, n1, n2, calculate)
+		startMeasurement(filepath, file_type, covalent_radii_cut_off, c, n1, n2, calculate)
 
 if __name__ == "__main__":
 	main()
