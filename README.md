@@ -9,7 +9,7 @@ Implementação do cálculo da entropia configuracional
 	- make
 	- alterar nauty.h:
 		- substituir bloco `#define _FILE_OFFSET_BITS` por:
-
+			`
 			#ifndef _FILE_OFFSET_BITS
 			#define _FILE_OFFSET_BITS 0
 			#if _FILE_OFFSET_BITS == 64
@@ -18,6 +18,7 @@ Implementação do cálculo da entropia configuracional
 			#undef _FILE_OFFSET_BITS
 			#endif
 			#endif
+			`
 
 - Mudanças Aboria:
 	- Entrar em src/cpp/libs/Aboria/third-party/nanoflann/nanoflann.hpp
