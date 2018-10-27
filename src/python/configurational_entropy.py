@@ -1,7 +1,6 @@
 import sys
 import boost_graph as bg
 import matplotlib.pyplot as plt
-import networkx as nx
 
 from measurement import Measurement
 from ase import Atom
@@ -122,14 +121,14 @@ def calculateHcn(H_n_values, c):
 
 		Hc_n_values.append((n, Hc_n))
 		if consider == 'Y':
-			if H1n > (H_n_extrapolated / 100):
+			if H1n > (H_n / 100):
 				print("n: %d. H1(n) exceeds 1%% of H(n). Not a valid measurement." % n)
 			else:
 				xy_polyfit.append((n, Hc_n))
 
 	return (Hc_n_values, xy_polyfit)
 
-def calculateConfigurationalEntropy(n1, n2, H_n_values, c):
+def calculateConfigurationalEntropy(n1, n2, H_n_values, c, calculate):
 	Hc_n_values, xy_polyfit = calculateHcn(H_n_values, c)
 
 	(x_p, y_p) = zip(*xy_polyfit)
@@ -138,18 +137,18 @@ def calculateConfigurationalEntropy(n1, n2, H_n_values, c):
 
 	# straight line fit
 	b, configurational_entropy = polyfit(x_p, y_p, 1) # configurational_entropy equals the slope of the line
-	plt.plot(x_p, b + configurational_entropy * x_p, '-')
-
 	x, y = zip(*Hc_n_values)
-	plt.scatter(x, y)
 
-	plt.axis([n1, n2, -3, 10])
-	plt.show()
+	if calculate == 'Y':
+		plt.plot(x_p, b + configurational_entropy * x_p, '-')
+		plt.scatter(x, y)
+		plt.axis([n1, n2, -3, 10])
+		plt.show()
 
 	print("Estimated configurational entropy = %f" % (configurational_entropy))
 
 def getNumberRandomPositions(n, total_nodes):
-	return 5 * n * n * total_nodes
+	return n * n * total_nodes
 
 def startMeasurement(filepath, file_type, covalent_radii_cut_off, c, n1, n2, calculate):
 	if n1 > n2:
@@ -214,7 +213,6 @@ def startMeasurement(filepath, file_type, covalent_radii_cut_off, c, n1, n2, cal
 
 		H_n_values.append((n, H_n, H1n, "Y"))
 
-	if calculate == "Y":
-		calculateConfigurationalEntropy(n1, n2, H_n_values, c)
+	calculateConfigurationalEntropy(n1, n2, H_n_values, c, calculate)
 
 	print("Program ended correctly")
