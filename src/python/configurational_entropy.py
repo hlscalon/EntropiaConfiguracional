@@ -1,7 +1,9 @@
 import sys
 import boost_graph as bg
 import matplotlib.pyplot as plt
+import os
 
+from datetime import datetime
 from measurement import Measurement
 from ase import Atom
 from ase.io import read
@@ -139,6 +141,17 @@ def calculateConfigurationalEntropy(n1, n2, H_n_values, c, calculate):
 	b, configurational_entropy = polyfit(x_p, y_p, 1) # configurational_entropy equals the slope of the line
 	x, y = zip(*Hc_n_values)
 
+	# dados grafico
+	date_now = datetime.now()
+	#dados = "graficos/dados/grafico_" + str(date_now.day) + "_" + str(date_now.month) + "_" + str(date_now.year) + "_" + str(date_now.hour) + "_" + str(date_now.minute) + "_" + str(date_now.second) + ".data"
+	dados = "graficos/dados/grafico_c" + str(c)
+	dirname = os.path.dirname(dados)
+	if not os.path.exists(dirname):
+		os.makedirs(dirname)
+	with open(dados, "w+") as file:
+		for x_y in Hc_n_values:
+			file.write(str(x_y[0]) + "\t" + str(x_y[1]) + "\n")
+
 	if calculate == 'Y':
 		plt.plot(x_p, b + configurational_entropy * x_p, '-')
 		plt.scatter(x, y)
@@ -148,7 +161,7 @@ def calculateConfigurationalEntropy(n1, n2, H_n_values, c, calculate):
 	print("Estimated configurational entropy = %f" % (configurational_entropy))
 
 def getNumberRandomPositions(n, total_nodes):
-	return n * n * total_nodes
+	return 5 * n * n * total_nodes
 
 def startMeasurement(filepath, file_type, covalent_radii_cut_off, c, n1, n2, calculate):
 	if n1 > n2:

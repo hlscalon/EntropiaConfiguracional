@@ -7,7 +7,8 @@ OPENMP = -fopenmp
 DEFINES = -DABORIA_LOG_LEVEL=1 -LOG #-DDEBUG
 OBJECT = boost_graph.so
 SOURCES = src/cpp/*.cpp
+DEBUG_INFO = -g
 
 main:
-	$(CC) $(CFLAGS) $(LIBS) $(PYTHON) $(OPENMP) $(DEFINES) $(SOURCES) $(OBJECTS) -o $(OBJECT)
+	$(CC) $(CFLAGS) $(LIBS) $(DEBUG_INFO) $(PYTHON) $(OPENMP) $(DEFINES) $(SOURCES) $(OBJECTS) -o $(OBJECT)
 	mv $(OBJECT) src/python
