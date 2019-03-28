@@ -1,6 +1,8 @@
 # EntropiaConfiguracional
 Implementação do cálculo da entropia configuracional
 
+### Instalação
+
 - Rodar script instalar.sh ou
 
 - Compilar nauty:
@@ -26,3 +28,34 @@ Implementação do cálculo da entropia configuracional
 - Mudanças Aboria:
 	- Entrar em src/cpp/libs/Aboria/third-party/nanoflann/nanoflann.hpp
 	- Alterar WORDSIZE para WORDSIZE_NANNOFLANN
+
+### Rodar o programa
+
+- Argumentos:
+
+```
+<$1>: from measurement (Y or N)
+```
+
+- Se sim (Y)
+
+```
+<$2>: measurement filepath
+```
+
+- Se não (N)
+
+```
+<$2>: xyz filepath
+<$3>: file type (V = Vink file or N = Normal)
+<$4>: covalent radii cut off
+<$5>: c
+<$6>: initial n
+<$7>: final n
+<$8>: calculate (Y or N)
+```
+
+#### Exemplo
+
+- python2 main.py N arquivos_xyz/SILICA_SAMPLES/3k/3k-total-2-ase.xyz V 1.12 5 20 22 N
+- python2 main.py Y medicoes/med_fcc2048.xyz_01_1_2019_00_00_00.ce
