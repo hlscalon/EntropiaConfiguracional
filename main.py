@@ -5,15 +5,15 @@ from src.python.calculate_from_measurement import calculateFromMeasurement
 
 def main():
 	if len(sys.argv) < 2:
-		print("1 parameter: from measurement (Y or N)\n")
+		print("<$1>: from measurement (Y or N)\n")
 		return
 
 	measurement = sys.argv[1]
 
 	if measurement == "Y":
 		if len(sys.argv) < 3:
-			print("1 parameter: from measurement (Y or N)\n" +
-				  "2 parameter: measurement filepath")
+			print("<$1>: from measurement (Y or N)\n" +
+				  "<$2>: measurement filepath")
 			return
 
 		filepath = sys.argv[2]

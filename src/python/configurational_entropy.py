@@ -142,7 +142,7 @@ def calculateConfigurationalEntropy(n1, n2, H_n_values, c, calculate):
 	if calculate == 'Y':
 		plt.plot(x_p, b + configurational_entropy * x_p, '-')
 		plt.scatter(x, y)
-		plt.axis([n1, n2, -3, 10])
+		plt.axis([n1, n2, -10, 10])
 		plt.show()
 
 	print("Estimated configurational entropy = %f" % (configurational_entropy))
