@@ -55,6 +55,14 @@ Implementação do cálculo da entropia configuracional
 <$8>: calculate (Y or N)
 ```
 
+- Possíveis mudanças necessárias para rodar o programa:
+
+    - Alterar número de posições aleatórias geradas, (padrão `m = n^2N`)
+        - Alterar função `getNumberRandomPositions` no arquivo `src/python/configurational_entropy.py`
+    - Alterar eixos do gráfico gerado, (padrão `-10, 10`):
+        - Alterar função `calculateConfigurationalEntropy` no arquivo `src/python/configurational_entropy.py`
+	- `plt.axis([n1, n2, -10, 10])`
+
 #### Exemplo
 
 - python2 main.py N arquivos_xyz/SILICA_SAMPLES/3k/3k-total-2-ase.xyz V 1.12 5 20 22 N
