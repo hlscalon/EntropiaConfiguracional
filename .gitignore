@@ -10,3 +10,6 @@ src/cpp/libs/nauty
 *.so
 comandos_init_main
 *.py.prof
+*.sublime-project
+*.sublime-workspace
+src/cpp/libs/
