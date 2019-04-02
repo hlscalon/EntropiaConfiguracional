@@ -6,7 +6,7 @@ from measurement import Measurement
 from ase import Atom
 from ase.io import read
 from ase.data import covalent_radii
-from ase.geometry import is_orthorhombic
+from ase.geometry import is_orthorhombic, crystal_structure_from_cell
 from ase.visualize import view
 from math import log
 from operator import itemgetter
@@ -178,10 +178,10 @@ def startMeasurement(filepath, file_type, covalent_radii_cut_off, c, n1, n2, cal
 	print("Graph created with success. Nodes found: %d" % total_nodes)
 
 	cell = slab.get_cell()
+	crystal_structure = crystal_structure_from_cell(cell)
 
-	# somente para celulas ortogonais
-	if not is_orthorhombic(cell):
-		print("Unit cell is not orthorhombic")
+	if crystal_structure != "ortorhombic" and crystal_structure != "cubic":
+		print("Unit cell is not orthorhombic nor cubic")
 		return
 
 	measurement = Measurement()
