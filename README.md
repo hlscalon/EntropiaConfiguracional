@@ -3,6 +3,10 @@ Implementação do cálculo da entropia configuracional
 
 ### Instalação
 
+- Dependências (nomes podem variar para cada distribuição):
+	- boost (boost, boost-devel, boost-graph)
+	- python (python2, python2-devel, python2-gdal, python2-matplotlib, python2-numpy, python2-tkinter, python2-graphviz)
+
 - Rodar script instalar.sh ou
 
 - Compilar nauty:
@@ -13,7 +17,7 @@ Implementação do cálculo da entropia configuracional
 	- make
 	- alterar nauty.h:
 		- substituir bloco `#define _FILE_OFFSET_BITS` por:
-		
+
 		```
 		#ifndef _FILE_OFFSET_BITS
 		#define _FILE_OFFSET_BITS 0
