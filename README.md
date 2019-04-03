@@ -5,7 +5,7 @@ Implementação do cálculo da entropia configuracional
 
 - Dependências (nomes podem variar para cada distribuição):
 	- boost (boost, boost-devel, boost-graph)
-	- python (python2, python2-devel, python2-gdal, python2-matplotlib, python2-numpy, python2-tkinter, python2-graphviz)
+	- python (python2, python2-devel, python2-matplotlib, python2-numpy, python2-tkinter, python2-graphviz)
 
 - Rodar script instalar.sh ou
 
